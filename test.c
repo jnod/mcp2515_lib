@@ -1,9 +1,8 @@
 #include "mcp2515.h"
 #include <stdio.h>
 
-uint8_t transfer(uint8_t value) {
+void spi_transfer(uint8_t* buf, uint8_t len) {
   puts("transfer");
-  return 0;
 }
 
 void select_mcp2515() {
@@ -15,6 +14,6 @@ void deselect_mcp2515() {
 }
 
 int main() {
-  init_spi(&transfer, &select_mcp2515, &deselect_mcp2515);
+  init_spi(&spi_transfer, &select_mcp2515, &deselect_mcp2515);
   return 0;
 }

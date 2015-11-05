@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-typedef uint8_t (*spi_transfer_t)(uint8_t value);
+typedef void (*spi_transfer_t)(uint8_t* buf, uint8_t len);
 typedef void (*spi_select_mcp2515_t)();
 typedef void (*spi_deselect_mcp2515_t)();
 
