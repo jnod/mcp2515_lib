@@ -54,7 +54,7 @@ void read_receive_buffer_0(can_message_t *message) {
 }
 
 /*******************************************************************************
-  Reads and decodes the value of receive buffer 1 (RXB1) and places the result 
+  Reads and decodes the value of receive buffer 1 (RXB1) and places the result
   into the *message parameter.
 *******************************************************************************/
 void read_receive_buffer_1(can_message_t *message) {

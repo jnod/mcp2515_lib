@@ -1,18 +1,25 @@
 #ifndef MCP2515_LIB_H_
 #define MCP2515_LIB_H_
 
+/*******************************************************************************
+  Fixed Size Data Type Definitions
+*******************************************************************************/
 #include <stdint.h>
+
+/*******************************************************************************
+  MCP2515 Technical Definitions
+*******************************************************************************/
 #include "mcp2515_dfs.h"
 
 /*******************************************************************************
-  Callback Function Datatypes
+  Callback Function Data Types
 *******************************************************************************/
 typedef void (*spi_deselect_t)();
 typedef void (*spi_select_t)();
 typedef void (*spi_transfer_t)(uint8_t* buf, uint8_t len);
 
 /*******************************************************************************
-  CAN Message Datatype
+  CAN Message Data Type
 *******************************************************************************/
 #define type_standard_data   0
 #define type_extended_data   1

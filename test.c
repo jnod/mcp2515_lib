@@ -1,33 +1,55 @@
-#include "mcp2515.h"
 #include <stdio.h>
+#include "mcp2515.h"
 
-uint8_t flags;
-can_message_t message;
+/*******************************************************************************
+  The most recently read value from the MCP2515 interrupt register (CANINTF)
+  Each bit represents a different flag. The individual flags are defined in the
+  mcp2515_dfs.h header.
+*******************************************************************************/
+uint8_t can_intr_flags;
 
-void deselect() {
+/*******************************************************************************
+  Temporary storage for incoming CAN messages.
+*******************************************************************************/
+can_message_t can_message;
+
+/*******************************************************************************
+  Deselects the MCP2515 by setting the slave select GPIO pin to logic high.
+*******************************************************************************/
+void spi_deselect_mcp2515() {
   puts("deselect");
 }
 
-void select() {
+/*******************************************************************************
+  Selects the MCP2515 by setting the slave select GPIO pin to logic low.
+*******************************************************************************/
+void spi_select_mcp2515() {
   puts("select");
 }
 
-void transfer(uint8_t *buf, uint8_t len) {
+/*******************************************************************************
+  Transfers data from the buffer to the slave and from the slave to the buffer
+  at the same time via SPI.
+*******************************************************************************/
+void spi_transfer(uint8_t *buf, uint8_t len) {
   buf[2] = 0xFF;
 
   puts("transfer");
 }
 
+/*******************************************************************************
+  Tests some of the mcp2515_lib functionality.
+*******************************************************************************/
 int main() {
-  init_spi(deselect, select, transfer);
+  init_spi(spi_deselect_mcp2515, spi_select_mcp2515, spi_transfer);
 
-  read_interrupt_flags(&flags);
+  read_interrupt_flags(&can_intr_flags);
 
-  if (IS_FLAG_SET(flags, RX1IF)) {
+  if (IS_FLAG_SET(can_intr_flags, RX1IF)) {
     puts("RX1IF is set");
   }
 
-  if (IS_FLAG_SET(flags, RX0IF)) {
+  if (IS_FLAG_SET(can_intr_flags, RX0IF)) {
     puts("RX0IF is set");
   }
 

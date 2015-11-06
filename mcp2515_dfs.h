@@ -7,12 +7,14 @@
 #define SPI_READ  0x03
 
 /*******************************************************************************
-  Registers
+  Register Addresses - Specific info about each register can be found in the
+  datasheet.
 *******************************************************************************/
 #define CANINTF   0x2C
 
 /*******************************************************************************
-  Interrupt Flag Bits (CANINTF bit masks, see datasheet)
+  Interrupt Flag Bit Masks - each bit mask aligns with a position in the CANINTF
+  register. Specific info about each flag can be found in the datasheet.
 *******************************************************************************/
 #define MERRF     0x80
 #define WAKIF     0x40
@@ -24,8 +26,10 @@
 #define RX0IF     0x01
 
 /*******************************************************************************
-  Function Macros
+  Flag Test Macro - determines whether the specified flag is set.
+    - flags:    a value read from the CANINTF register
+    - bit_mask: one of the Interrupt Flag Bit Masks
 *******************************************************************************/
-#define IS_FLAG_SET(flags, bit) (flags & bit)
+#define IS_FLAG_SET(flags, bit_mask) (flags & bit_mask)
 
 #endif
