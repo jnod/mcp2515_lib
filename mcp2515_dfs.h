@@ -7,7 +7,7 @@
 #define SPI_READ  0x03
 
 /*******************************************************************************
-  Register Addresses - Specific info about each register can be found in the
+  Register Addresses - specific info about each register can be found in the
   datasheet.
 *******************************************************************************/
 #define CANINTF   0x2C
