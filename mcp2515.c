@@ -1,38 +1,17 @@
 #include "mcp2515.h"
 
-/*******************************************************************************
-  Callback Function Pointers
-*******************************************************************************/
-static spi_deselect_t deselect;
-static spi_select_t select;
-static spi_transfer_t transfer;
+static uint8_t buffer[15];
 
 /*******************************************************************************
-  SPI Transfer Buffer
-*******************************************************************************/
-static uint8_t buffer[15] = {0};
-
-/*******************************************************************************
-  Initializes the SPI interface callback functions. This allows clients to
-  define a custom SPI interface for the platform and layout being used.
-*******************************************************************************/
-void init_spi(spi_deselect_t desel, spi_select_t sel, spi_transfer_t transf) {
-  transfer = transf;
-  select = sel;
-  deselect = desel;
-}
-
-/*******************************************************************************
-  Reads the interrupt register (CANINTF) value into the flags parameter.
+  Reads the interrupt register (CANINTF) value into the flags parameter. Each
+  bit represents a different flag. The individual flags are defined in the
+  mcp2515_dfs.h header.
 *******************************************************************************/
 void read_interrupt_flags(uint8_t *flags) {
-  select();
-
   buffer[0] = SPI_READ;
   buffer[1] = CANINTF;
 
-  transfer(buffer, 3);
-  deselect();
+  spi_transfer_mcp2515(buffer, 3);
 
   *flags = buffer[2];
 }

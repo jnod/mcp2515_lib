@@ -12,11 +12,9 @@
 #include "mcp2515_dfs.h"
 
 /*******************************************************************************
-  Callback Function Data Types
+  Callback Function - must be implemented by the client
 *******************************************************************************/
-typedef void (*spi_deselect_t)();
-typedef void (*spi_select_t)();
-typedef void (*spi_transfer_t)(uint8_t* buf, uint8_t len);
+void spi_transfer_mcp2515(uint8_t* buf, uint8_t len);
 
 /*******************************************************************************
   CAN Message Data Type
@@ -35,9 +33,8 @@ typedef struct {
 } can_message_t;
 
 /*******************************************************************************
-  Library API
+  Library API - detailed descriptions can be found in the mcp2515.c source file.
 *******************************************************************************/
-void init_spi(spi_deselect_t desel, spi_select_t sel, spi_transfer_t transf);
 void read_interrupt_flags(uint8_t *flags);
 void read_receive_buffer_0(can_message_t *message);
 void read_receive_buffer_1(can_message_t *message);
