@@ -3,7 +3,15 @@
 static uint8_t buffer[15];
 
 /*******************************************************************************
-  Reads the interrupt register (CANINTF) value into the flags parameter. Each
+  Clears interrupt register (CANINTF) flags that correlate with a '1' in the
+  bit_mask parameter.
+*******************************************************************************/
+void clear_interrupt_flags(uint8_t bit_mask) {
+
+}
+
+/*******************************************************************************
+  Reads the interrupt register (CANINTF) value into the *flags parameter. Each
   bit represents a different flag. The individual flags are defined in the
   mcp2515_dfs.h header.
 *******************************************************************************/
@@ -14,14 +22,6 @@ void read_interrupt_flags(uint8_t *flags) {
   spi_transfer_mcp2515(buffer, 3);
 
   *flags = buffer[2];
-}
-
-/*******************************************************************************
-  Clears interrupt register (CANINTF) flags that correlate with a '1' in the
-  bit_mask parameter.
-*******************************************************************************/
-void clear_flags(uint8_t bit_mask) {
-
 }
 
 /*******************************************************************************

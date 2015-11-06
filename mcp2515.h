@@ -1,20 +1,15 @@
 #ifndef MCP2515_LIB_H_
 #define MCP2515_LIB_H_
 
-/*******************************************************************************
-  Fixed Size Data Type Definitions
-*******************************************************************************/
 #include <stdint.h>
-
-/*******************************************************************************
-  MCP2515 Technical Definitions
-*******************************************************************************/
 #include "mcp2515_dfs.h"
 
 /*******************************************************************************
-  Callback Function - must be implemented by the client
+  Callback Function - implemented by the client. Must select MCP2515, transfer
+  len bytes from *buf to MCP2515 and from MCP2515 to *buf simultaneously, and
+  then deselect MCP2515.
 *******************************************************************************/
-void spi_transfer_mcp2515(uint8_t* buf, uint8_t len);
+void spi_transfer_mcp2515(uint8_t *buf, uint8_t len);
 
 /*******************************************************************************
   CAN Message Data Type
@@ -35,6 +30,7 @@ typedef struct {
 /*******************************************************************************
   Library API - detailed descriptions can be found in the mcp2515.c source file.
 *******************************************************************************/
+void clear_interrupt_flags(uint8_t bit_mask);
 void read_interrupt_flags(uint8_t *flags);
 void read_receive_buffer_0(can_message_t *message);
 void read_receive_buffer_1(can_message_t *message);
