@@ -7,7 +7,12 @@ static uint8_t buffer[15];
   bit_mask parameter.
 *******************************************************************************/
 void clear_interrupt_flags(uint8_t bit_mask) {
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = CANINTF;
+  buffer[2] = bit_mask;
+  buffer[3] = 0x00;
 
+  spi_transfer_mcp2515(buffer, 4);
 }
 
 /*******************************************************************************
