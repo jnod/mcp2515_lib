@@ -4,7 +4,8 @@
 /*******************************************************************************
   SPI Commands
 *******************************************************************************/
-#define SPI_READ  0x03
+#define SPI_READ        0x03
+#define SPI_BIT_MODIFY  0x05
 
 /*******************************************************************************
   Register Addresses - specific info about each register can be found in the
