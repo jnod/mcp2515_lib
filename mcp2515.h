@@ -20,8 +20,8 @@ void spi_transfer_mcp2515(uint8_t *buf, uint8_t len);
 
 typedef struct {
   uint8_t   type;
-  uint16_t  standard_id; // Only lower 11 bits are used
-  uint32_t  extended_id; // Only lower 18 bits are used
+  uint16_t  std_id; // Only lower 11 bits are used
+  uint32_t  ext_id; // Only lower 18 bits are used
   uint8_t   length;
   uint8_t   data[8];
 } can_message_t;
@@ -32,8 +32,8 @@ typedef struct {
 void clear_interrupt_flags(uint8_t bit_mask);
 void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
 void read_interrupt_flags(uint8_t *flags);
-void read_receive_buffer_0(can_message_t *message);
-void read_receive_buffer_1(can_message_t *message);
+void read_receive_buffer_n(uint8_t n, can_message_t *message);
+void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id);
 
 /*******************************************************************************
   SPI Commands
@@ -46,10 +46,19 @@ void read_receive_buffer_1(can_message_t *message);
   Register Addresses - specific info about each register can be found in the
   datasheet.
 *******************************************************************************/
-#define CANINTF   0x2C
-#define CNF1      0X2A
-#define CNF2      0X29
-#define CNF3      0X28
+#define CANINTF   0x2C // Interrupt Flags
+
+#define CNF1      0x2A // Configuration
+#define CNF2      0x29
+#define CNF3      0x28
+
+#define RXF0      0x00 // Filters for RXB0
+#define RXF1      0x04
+
+#define RXF2      0x08 // Filters for RXB1
+#define RXF3      0x10
+#define RXF4      0x14
+#define RXF5      0x18
 
 /*******************************************************************************
   Quick Configurations - CNF1, CNF2, and CNF3 can be configured in many ways to
