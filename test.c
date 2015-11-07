@@ -22,7 +22,7 @@ int main() {
   Declared in mcp2515.h, but isn't implemented by the library.
 *******************************************************************************/
 void spi_transfer_mcp2515(uint8_t *buf, uint8_t len) {
-  buf[2] = 0xFF;
+  buf[2] = 0xF2;
 
   puts("transfer");
 }
