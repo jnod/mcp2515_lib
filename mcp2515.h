@@ -30,6 +30,7 @@ typedef struct {
   Library API - detailed descriptions can be found in the mcp2515.c source file.
 *******************************************************************************/
 void clear_interrupt_flags(uint8_t bit_mask);
+void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
 void read_interrupt_flags(uint8_t *flags);
 void read_receive_buffer_0(can_message_t *message);
 void read_receive_buffer_1(can_message_t *message);
@@ -37,27 +38,45 @@ void read_receive_buffer_1(can_message_t *message);
 /*******************************************************************************
   SPI Commands
 *******************************************************************************/
-#define SPI_READ        0x03
 #define SPI_BIT_MODIFY  0x05
+#define SPI_READ        0x03
+#define SPI_WRITE       0x02
 
 /*******************************************************************************
   Register Addresses - specific info about each register can be found in the
   datasheet.
 *******************************************************************************/
 #define CANINTF   0x2C
+#define CNF1      0X2A
+#define CNF2      0X29
+#define CNF3      0X28
+
+/*******************************************************************************
+  Quick Configurations - CNF1, CNF2, and CNF3 can be configured in many ways to
+  accomodate for different clock and baud rates. The following are just a few
+  examples. A CAN timing calculator can be found at:
+  http://www.kvaser.com/support/calculators/bit-timing-calculator/
+*******************************************************************************/
+#define CNF1_16MHZ_125KBIT  0x43
+#define CNF2_16MHZ_125KBIT  0xA3
+#define CNF3_16MHZ_125KBIT  0x05
+
+#define CNF1_10MHZ_125KBIT  0x41
+#define CNF2_10MHZ_125KBIT  0xAD
+#define CNF3_10MHZ_125KBIT  0x06
 
 /*******************************************************************************
   Interrupt Flag Bit Masks - each bit mask aligns with a position in the CANINTF
   register. Specific info about each flag can be found in the datasheet.
 *******************************************************************************/
-#define MERRF     0x80
-#define WAKIF     0x40
-#define ERRIF     0x20
-#define TX2IF     0x10
-#define TX1IF     0x08
-#define TX0IF     0x04
-#define RX1IF     0x02
-#define RX0IF     0x01
+#define MERRF   0x80
+#define WAKIF   0x40
+#define ERRIF   0x20
+#define TX2IF   0x10
+#define TX1IF   0x08
+#define TX0IF   0x04
+#define RX1IF   0x02
+#define RX0IF   0x01
 
 /*******************************************************************************
   Flag Test Macro - determines whether the specified flag is set.
