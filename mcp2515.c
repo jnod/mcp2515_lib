@@ -70,3 +70,15 @@ void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id) {
 void set_mask(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id) {
 
 }
+
+/*******************************************************************************
+  Sets the mode of operation. Defaults is configuration on startup.
+*******************************************************************************/
+void set_mode(uint8_t mode) {
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = ADDR_CANCTRL;
+  buffer[2] = 0xE0;
+  buffer[3] = mode;
+
+  spi_transfer_mcp2515(buffer, 4);
+}
