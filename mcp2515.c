@@ -49,14 +49,15 @@ void read_interrupt_flags(uint8_t *flags) {
   Reads and decodes the value of receive buffer 0 (RXB0) and places the result
   into the *message parameter.
 *******************************************************************************/
-void read_receive_buffer_0(can_message_t *message) {
+void read_receive_buffer_n(uint8_t n, can_message_t *message) {
 
 }
 
 /*******************************************************************************
-  Reads and decodes the value of receive buffer 1 (RXB1) and places the result
-  into the *message parameter.
+  Sets the filter associated with the provided filter address. Each filter
+  actually consists of 4 registers, but this function simplifies the process.
+  Each filter address is defined in the mcp2515.h header.
 *******************************************************************************/
-void read_receive_buffer_1(can_message_t *message) {
+void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id) {
 
 }
