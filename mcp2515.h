@@ -13,10 +13,10 @@ void spi_transfer_mcp2515(uint8_t *buf, uint8_t len);
 /*******************************************************************************
   CAN Message Data Type
 *******************************************************************************/
-#define TYPE_STANDARD_DATA   0
-#define TYPE_EXTENDED_DATA   1
-#define TYPE_STANDARD_REMOTE 2
-#define TYPE_EXTENDED_REMOTE 3
+#define TYPE_STANDARD_DATA   0x00
+#define TYPE_STANDARD_REMOTE 0x01
+#define TYPE_EXTENDED_DATA   0x10
+#define TYPE_EXTENDED_REMOTE 0x11
 
 typedef struct {
   uint8_t   type;
@@ -51,6 +51,8 @@ void set_mode(uint8_t mode);
 *******************************************************************************/
 #define SPI_BIT_MODIFY  0x05
 #define SPI_READ        0x03
+#define SPI_READ_RX0    0x90
+#define SPI_READ_RX1    0x92
 #define SPI_WRITE       0x02
 
 /*******************************************************************************

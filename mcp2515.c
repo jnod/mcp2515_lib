@@ -1,6 +1,6 @@
 #include "mcp2515.h"
 
-static uint8_t buffer[15];
+static uint8_t buffer[14];
 
 /*******************************************************************************
   Clears interrupt register (CANINTF) flags that correlate with a '1' in the
@@ -46,11 +46,40 @@ void read_interrupt_flags(uint8_t *flags) {
 }
 
 /*******************************************************************************
-  Reads and decodes the value of receive buffer 0 (RXB0) and places the result
-  into the *message parameter.
+  Reads and decodes the value of receive buffer 0 (RXB0) for n == 0 or receive
+  buffer 1 (RXB1) for n != 0 and places the result into the *message parameter.
 *******************************************************************************/
-void read_receive_buffer_n(uint8_t n, can_message_t *message) {
+#define RXB1SIDH  buffer[1]
+#define RXB1SIDL  buffer[2]
+#define RXB1EID8  buffer[3]
+#define RXB1EID0  buffer[4]
+#define RXB1DLC   buffer[5]
+#define IDE       (buffer[2] & 0x08)
+#define SRR       (buffer[2] & 0x10)
+#define RTR       (buffer[5] & 0x40)
+#define EID17_16  (buffer[2] & 0x03)
 
+void read_receive_buffer_n(uint8_t n, can_message_t *message) {
+  buffer[0] = (n == 0) ? SPI_READ_RX0 : SPI_READ_RX1;
+
+  spi_transfer_mcp2515(buffer, 14);
+
+  // check IDE bit for id type, IDE == 0 indicates standard id
+  // message->type = 0x0R (std_id), 0x1R (ext_id), R = remote flag
+  if (IDE == 0) {
+    // standard id, shift standard remote flag SRR into bit 0
+    message->type =   SRR >> 4;
+  } else {
+    // extended id, shift extended remote flag RTR into bit 0
+    message->type =   0x10 | (RTR >> 6);
+
+    message->ext_id = (((uint32_t) EID17_16) << 16)
+                        | (((uint32_t) RXB1EID8) << 8)
+                        | ((uint32_t) RXB1EID0);
+  }
+
+  // there will always be a standard id
+  message->std_id = (((uint16_t) RXB1SIDH) << 3) | (((uint16_t) RXB1SIDL) >> 5);
 }
 
 /*******************************************************************************
