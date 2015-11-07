@@ -75,7 +75,6 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
   } else {
     // extended id, shift extended remote flag RTR into bit 0
     message->type = 0x10 | (RTR >> 6);
-
     message->ext_id = (((uint32_t) EID17_16) << 16)
                         | (((uint32_t) RXB1EID8) << 8)
                         | ((uint32_t) RXB1EID0);
@@ -99,25 +98,59 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
 }
 
 /*******************************************************************************
-  Sets the filter associated with the provided filter address. Each filter
-  actually consists of 4 registers, but this function simplifies the process.
-  Each filter address is defined in the mcp2515.h header.
+  Sets the filter associated with the provided address. Each filter address is
+  defined in the mcp2515.h header. Only the least significant 18 bits of ext_id
+  are valid. This filter will ignore the standard id of any incoming message.
 *******************************************************************************/
-void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id) {
+void set_ext_filter(uint8_t addr, uint32_t ext_id) {
+  ext_id &= 0x0003FFFF; // clear 14 MSB (ext_id is only 18 bits long)
 
+  buffer[0] = SPI_WRITE;
+  buffer[1] = addr + 1;
+  buffer[2] = 0x08 | ((uint8_t) (ext_id >> 16));
+  buffer[3] = (uint8_t) (ext_id >> 8);
+  buffer[4] = (uint8_t) ext_id;
+
+  spi_transfer_mcp2515(buffer, 5);
 }
 
 /*******************************************************************************
-  Sets the mask associated with the provided mask address. Each mask actually
-  consists of 4 registers, but this function simplifies the process. Each mask
-  address is defined in the mcp2515.h header.
+  Sets the filter associated with the provided address. Each filter address is
+  defined in the mcp2515.h header. Only the least significant 11 bits of std_id
+  are valid. This filter will ignore the extended id of any incoming message.
 *******************************************************************************/
-void set_mask(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id) {
+void set_std_filter(uint8_t addr, uint16_t std_id) {
+  std_id &= 0x07FF; // clear 5 MSB (std_id is only 11 bits long)
 
+  buffer[0] = SPI_WRITE;
+  buffer[1] = addr;
+  buffer[2] = (uint8_t) (std_id >> 3);
+  buffer[3] = (((uint8_t) std_id) << 5);
+
+  spi_transfer_mcp2515(buffer, 4);
 }
 
 /*******************************************************************************
-  Sets the mode of operation. Defaults is configuration on startup.
+  Sets the mask associated with the provided address. Each mask address is
+  defined in the mcp2515.h header. Only the least significant 11 bits of std_id
+  and 18 of ext_id are valid.
+*******************************************************************************/
+void set_mask(uint8_t addr, uint16_t std_id, uint32_t ext_id) {
+  std_id &= 0x07FF; // clear 5 MSB (std_id is only 11 bits long)
+  ext_id &= 0x0003FFFF; // clear 14 MSB (ext_id is only 18 bits long)
+
+  buffer[0] = SPI_WRITE;
+  buffer[1] = addr;
+  buffer[2] = (uint8_t) (std_id >> 3);
+  buffer[3] = (((uint8_t) std_id) << 5) | ((uint8_t) (ext_id >> 16));
+  buffer[4] = (uint8_t)(ext_id >> 8);
+  buffer[5] = (uint8_t) ext_id;
+
+  spi_transfer_mcp2515(buffer, 6);
+}
+
+/*******************************************************************************
+  Sets the mode of operation. Defaults to configuration mode on startup.
 *******************************************************************************/
 void set_mode(uint8_t mode) {
   buffer[0] = SPI_BIT_MODIFY;
