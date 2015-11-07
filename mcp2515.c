@@ -48,6 +48,8 @@ void read_interrupt_flags(uint8_t *flags) {
 /*******************************************************************************
   Reads and decodes the value of receive buffer 0 (RXB0) for n == 0 or receive
   buffer 1 (RXB1) for n != 0 and places the result into the *message parameter.
+  For standard id messages, the ext_id data field will not be modified, and for
+  data length < 8 messages, the trailing data bytes will not be modified.
 *******************************************************************************/
 #define RXB1SIDH  buffer[1]
 #define RXB1SIDL  buffer[2]
