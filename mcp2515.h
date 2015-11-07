@@ -34,6 +34,13 @@ void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
 void read_interrupt_flags(uint8_t *flags);
 void read_receive_buffer_n(uint8_t n, can_message_t *message);
 void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id);
+void set_mask(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id);
+void set_mode(uint8_t mode);
+
+/*******************************************************************************
+  Modes of Operation
+*******************************************************************************/
+#define MODE_CONFIGURATION
 
 /*******************************************************************************
   SPI Commands
@@ -46,19 +53,19 @@ void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id);
   Register Addresses - specific info about each register can be found in the
   datasheet.
 *******************************************************************************/
-#define CANINTF   0x2C // Interrupt Flags
+#define ADDR_CANINTF  0x2C // Interrupt Flags
 
-#define CNF1      0x2A // Configuration
-#define CNF2      0x29
-#define CNF3      0x28
+#define ADDR_CNF1     0x2A // Configuration
+#define ADDR_CNF2     0x29
+#define ADDR_CNF3     0x28
 
-#define RXF0      0x00 // Filters for RXB0
-#define RXF1      0x04
+#define ADDR_RXF0     0x00 // Filters for RXB0
+#define ADDR_RXF1     0x04
 
-#define RXF2      0x08 // Filters for RXB1
-#define RXF3      0x10
-#define RXF4      0x14
-#define RXF5      0x18
+#define ADDR_RXF2     0x08 // Filters for RXB1
+#define ADDR_RXF3     0x10
+#define ADDR_RXF4     0x14
+#define ADDR_RXF5     0x18
 
 /*******************************************************************************
   Quick Configurations - CNF1, CNF2, and CNF3 can be configured in many ways to
@@ -78,14 +85,14 @@ void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id);
   Interrupt Flag Bit Masks - each bit mask aligns with a position in the CANINTF
   register. Specific info about each flag can be found in the datasheet.
 *******************************************************************************/
-#define MERRF   0x80
-#define WAKIF   0x40
-#define ERRIF   0x20
-#define TX2IF   0x10
-#define TX1IF   0x08
-#define TX0IF   0x04
-#define RX1IF   0x02
-#define RX0IF   0x01
+#define MASK_MERRF  0x80
+#define MASK_WAKIF  0x40
+#define MASK_ERRIF  0x20
+#define MASK_TX2IF  0x10
+#define MASK_TX1IF  0x08
+#define MASK_TX0IF  0x04
+#define MASK_RX1IF  0x02
+#define MASK_RX0IF  0x01
 
 /*******************************************************************************
   Flag Test Macro - determines whether the specified flag is set.

@@ -7,11 +7,11 @@ can_message_t can_message;
 int main() {
   read_interrupt_flags(&can_intr_flags);
 
-  if (IS_FLAG_SET(can_intr_flags, RX1IF)) {
+  if (IS_FLAG_SET(can_intr_flags, MASK_RX1IF)) {
     puts("RX1IF is set");
   }
 
-  if (IS_FLAG_SET(can_intr_flags, RX0IF)) {
+  if (IS_FLAG_SET(can_intr_flags, MASK_RX0IF)) {
     puts("RX0IF is set");
   }
 

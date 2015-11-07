@@ -8,7 +8,7 @@ static uint8_t buffer[15];
 *******************************************************************************/
 void clear_interrupt_flags(uint8_t bit_mask) {
   buffer[0] = SPI_BIT_MODIFY;
-  buffer[1] = CANINTF;
+  buffer[1] = ADDR_CANINTF;
   buffer[2] = bit_mask;
   buffer[3] = 0x00;
 
@@ -23,7 +23,7 @@ void clear_interrupt_flags(uint8_t bit_mask) {
 *******************************************************************************/
 void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
   buffer[0] = SPI_WRITE;
-  buffer[1] = CNF1;
+  buffer[1] = ADDR_CNF1;
   buffer[2] = cnf1;
   buffer[3] = cnf2;
   buffer[4] = cnf3;
@@ -38,7 +38,7 @@ void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
 *******************************************************************************/
 void read_interrupt_flags(uint8_t *flags) {
   buffer[0] = SPI_READ;
-  buffer[1] = CANINTF;
+  buffer[1] = ADDR_CANINTF;
 
   spi_transfer_mcp2515(buffer, 3);
 
@@ -59,5 +59,14 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
   Each filter address is defined in the mcp2515.h header.
 *******************************************************************************/
 void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id) {
+
+}
+
+/*******************************************************************************
+  Sets the mask associated with the provided mask address. Each mask actually
+  consists of 4 registers, but this function simplifies the process. Each mask
+  address is defined in the mcp2515.h header.
+*******************************************************************************/
+void set_mask(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id) {
 
 }
