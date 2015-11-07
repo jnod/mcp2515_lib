@@ -16,9 +16,25 @@ void clear_interrupt_flags(uint8_t bit_mask) {
 }
 
 /*******************************************************************************
+  Sets the configuration registers (CNF1, CNF2, and CNF3) to the provided
+  values. These values determine the baud rate for different oscillators. A few
+  quick configurations are provided in the mcp2515.h header. More info can be
+  found in the datasheet.
+*******************************************************************************/
+void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
+  buffer[0] = SPI_WRITE;
+  buffer[1] = CNF1;
+  buffer[2] = cnf1;
+  buffer[3] = cnf2;
+  buffer[4] = cnf3;
+
+  spi_transfer_mcp2515(buffer, 5);
+}
+
+/*******************************************************************************
   Reads the interrupt register (CANINTF) value into the *flags parameter. Each
   bit represents a different flag. The individual flags are defined in the
-  mcp2515_dfs.h header.
+  mcp2515.h header.
 *******************************************************************************/
 void read_interrupt_flags(uint8_t *flags) {
   buffer[0] = SPI_READ;
