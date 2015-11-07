@@ -20,8 +20,8 @@ void spi_transfer_mcp2515(uint8_t *buf, uint8_t len);
 
 typedef struct {
   uint8_t   type;
-  uint16_t  std_id; // Only lower 11 bits are used
-  uint32_t  ext_id; // Only lower 18 bits are used
+  uint16_t  std_id; // Only least significant 11 bits are used
+  uint32_t  ext_id; // Only least significant 18 bits are used
   uint8_t   length;
   uint8_t   data[8];
 } can_message_t;
@@ -33,8 +33,9 @@ void clear_interrupt_flags(uint8_t bit_mask);
 void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
 void read_interrupt_flags(uint8_t *flags);
 void read_receive_buffer_n(uint8_t n, can_message_t *message);
-void set_filter(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id);
-void set_mask(uint8_t filter_addr, uint16_t std_id, uint32_t ext_id);
+void set_ext_filter(uint8_t addr, uint32_t ext_id);
+void set_std_filter(uint8_t addr, uint16_t std_id);
+void set_mask(uint8_t addr, uint16_t std_id, uint32_t ext_id);
 void set_mode(uint8_t mode);
 
 /*******************************************************************************
