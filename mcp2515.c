@@ -54,10 +54,11 @@ void read_interrupt_flags(uint8_t *flags) {
 #define RXB1EID8  buffer[3]
 #define RXB1EID0  buffer[4]
 #define RXB1DLC   buffer[5]
-#define IDE       (buffer[2] & 0x08)
-#define SRR       (buffer[2] & 0x10)
-#define RTR       (buffer[5] & 0x40)
-#define EID17_16  (buffer[2] & 0x03)
+#define IDE       (RXB1SIDL & 0x08)
+#define SRR       (RXB1SIDL & 0x10)
+#define RTR       (RXB1DLC  & 0x40)
+#define EID17_16  (RXB1SIDL & 0x03)
+#define DLC3_0    (RXB1DLC  & 0x0F)
 
 void read_receive_buffer_n(uint8_t n, can_message_t *message) {
   buffer[0] = (n == 0) ? SPI_READ_RX0 : SPI_READ_RX1;
@@ -68,10 +69,10 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
   // message->type = 0x0R (std_id), 0x1R (ext_id), R = remote flag
   if (IDE == 0) {
     // standard id, shift standard remote flag SRR into bit 0
-    message->type =   SRR >> 4;
+    message->type = SRR >> 4;
   } else {
     // extended id, shift extended remote flag RTR into bit 0
-    message->type =   0x10 | (RTR >> 6);
+    message->type = 0x10 | (RTR >> 6);
 
     message->ext_id = (((uint32_t) EID17_16) << 16)
                         | (((uint32_t) RXB1EID8) << 8)
@@ -80,6 +81,19 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
 
   // there will always be a standard id
   message->std_id = (((uint16_t) RXB1SIDH) << 3) | (((uint16_t) RXB1SIDL) >> 5);
+
+  uint8_t length = DLC3_0;
+  if (length > 8) length = 8; // ensure length is in the valid 0-8 byte range
+  message->length = length;
+
+  uint8_t i = 0;
+  uint8_t *receive_data = &buffer[6];
+  uint8_t *message_data = &message->data[0];
+
+  while (i < length) {
+    message_data[i] = receive_data[i];
+    i++;
+  }
 }
 
 /*******************************************************************************
