@@ -40,7 +40,11 @@ void set_mode(uint8_t mode);
 /*******************************************************************************
   Modes of Operation
 *******************************************************************************/
-#define MODE_CONFIGURATION
+#define MODE_NORMAL         0x00
+#define MODE_SLEEP          0x20
+#define MODE_LOOPBACK       0x40
+#define MODE_LISTEN_ONLY    0x60
+#define MODE_CONFIGURATION  0x80
 
 /*******************************************************************************
   SPI Commands
@@ -55,6 +59,8 @@ void set_mode(uint8_t mode);
 *******************************************************************************/
 #define ADDR_CANINTF  0x2C // Interrupt Flags
 
+#define ADDR_CANCTRL  0x0F // Can Control
+
 #define ADDR_CNF1     0x2A // Configuration
 #define ADDR_CNF2     0x29
 #define ADDR_CNF3     0x28
@@ -66,6 +72,10 @@ void set_mode(uint8_t mode);
 #define ADDR_RXF3     0x10
 #define ADDR_RXF4     0x14
 #define ADDR_RXF5     0x18
+
+#define ADDR_RXM0     0x20 // Mask for RXB0
+
+#define ADDR_RXM1     0x24 // Mask for RXB1
 
 /*******************************************************************************
   Quick Configurations - CNF1, CNF2, and CNF3 can be configured in many ways to
