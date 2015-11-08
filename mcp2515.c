@@ -60,6 +60,8 @@ void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
   Loads a message into transfer buffer n (TXBn). Does not automatically send
   the message. If either id field is longer than it should be (std_id > 11 bits
   or ext_id > 18 bits), the overflow bits will be ignored.
+
+  Returns 0 if successful, -1 otherwise.
 *******************************************************************************/
 #define TXBnSIDH  buffer[1]
 #define TXBnSIDL  buffer[2]
@@ -69,8 +71,11 @@ void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
 #define TX_EXIDE  ((message->mtype & 0x02) << 2)
 #define TX_RTR    ((message->mtype & 0x01) << 6)
 
-void load_tx_n(uint8_t n, can_message_t *message) {
+int load_tx_n(uint8_t n, can_message_t *message) {
   switch (n) {
+    case 0:
+      buffer[0] = SPI_LOAD_TX0;
+      break;
     case 1:
       buffer[0] = SPI_LOAD_TX1;
       break;
@@ -78,7 +83,7 @@ void load_tx_n(uint8_t n, can_message_t *message) {
       buffer[0] = SPI_LOAD_TX2;
       break;
     default:
-      buffer[0] = SPI_LOAD_TX0;
+      return -1;
   }
 
   uint8_t std_id = message->std_id & 0x07FF; // 11 LSB
@@ -101,6 +106,8 @@ void load_tx_n(uint8_t n, can_message_t *message) {
   }
 
   spi_transfer_mcp2515(buffer, (6 + length));
+
+  return 0;
 }
 
 /*******************************************************************************
@@ -148,7 +155,7 @@ void read_interrupt_flags(uint8_t *flags) {
 #define EID17_16  (RXBnSIDL & 0x03)
 #define DLC3_0    (RXBnDLC  & 0x0F)
 
-void read_receive_buffer_n(uint8_t n, can_message_t *message) {
+void read_rx_n(uint8_t n, can_message_t *message) {
   buffer[0] = (n == 0) ? SPI_READ_RX0 : SPI_READ_RX1;
 
   spi_transfer_mcp2515(buffer, 14);
@@ -181,6 +188,31 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
     message_data[i] = receive_data[i];
     i++;
   }
+}
+
+/*******************************************************************************
+  Request to send transmit buffer n (TXBn).
+
+  Returns 0 if successful, -1 otherwise.
+*******************************************************************************/
+int rts_tx_n(uint8_t n) {
+  switch (n) {
+    case 0:
+      buffer[0] = SPI_RTS_TX0;
+      break;
+    case 1:
+      buffer[0] = SPI_RTS_TX1;
+      break;
+    case 2:
+      buffer[0] = SPI_RTS_TX2;
+      break;
+    default:
+      return -1;
+  }
+
+  spi_transfer_mcp2515(buffer, 1);
+
+  return 0;
 }
 
 /*******************************************************************************
