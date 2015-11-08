@@ -56,12 +56,13 @@ typedef struct {
   Library API
 
   Detailed descriptions can be found in the mcp2515.c source file. Many of the
-  parameters have been listed as definitions in this header file.
+  function parameters have been listed as definitions in this header file.
 *******************************************************************************/
 void clear_error_flags(uint8_t bit_mask);
 void clear_interrupt_flags(uint8_t bit_mask);
 void config_interrupts(uint8_t caninte_value);
 void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
+void load_tx_n(uint8_t n, can_message_t message);
 void read_error_flags(uint8_t *flags);
 void read_interrupt_flags(uint8_t *flags);
 void read_receive_buffer_n(uint8_t n, can_message_t *message);
@@ -153,6 +154,9 @@ void set_mode(uint8_t mode);
 
 *******************************************************************************/
 #define SPI_BIT_MODIFY  0x05
+#define SPI_LOAD_TX0    0x40
+#define SPI_LOAD_TX1    0x42
+#define SPI_LOAD_TX2    0x44
 #define SPI_READ        0x03
 #define SPI_READ_RX0    0x90
 #define SPI_READ_RX1    0x92
