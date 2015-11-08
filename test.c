@@ -35,7 +35,7 @@ void print_array(uint8_t *arr, uint8_t len) {
 }
 
 void print_can_message(can_message_t message) {
-  printf("type:   %02hhx\n", message.type);
+  printf("type:   %02hhx\n", message.mtype);
   printf("std_id: %02hhx\n", message.std_id);
   printf("ext_id: %02hhx\n", message.ext_id);
   printf("length: %02hhx\n", message.length);
