@@ -62,10 +62,11 @@ void clear_error_flags(uint8_t bit_mask);
 void clear_interrupt_flags(uint8_t bit_mask);
 void config_interrupts(uint8_t caninte_value);
 void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
-void load_tx_n(uint8_t n, can_message_t message);
+int  load_tx_n(uint8_t n, can_message_t *message);
 void read_error_flags(uint8_t *flags);
 void read_interrupt_flags(uint8_t *flags);
-void read_receive_buffer_n(uint8_t n, can_message_t *message);
+void read_rx_n(uint8_t n, can_message_t *message);
+int  rts_tx_n(uint8_t n);
 void set_ext_filter(uint8_t addr, uint32_t ext_id);
 void set_std_filter(uint8_t addr, uint16_t std_id);
 void set_mask(uint8_t addr, uint16_t std_id, uint32_t ext_id);
@@ -160,6 +161,9 @@ void set_mode(uint8_t mode);
 #define SPI_READ        0x03
 #define SPI_READ_RX0    0x90
 #define SPI_READ_RX1    0x92
+#define SPI_RTS_TX0     0x81
+#define SPI_RTS_TX1     0x82
+#define SPI_RTS_TX2     0x84
 #define SPI_WRITE       0x02
 
 #endif
