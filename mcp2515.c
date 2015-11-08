@@ -57,6 +57,53 @@ void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
 }
 
 /*******************************************************************************
+  Loads a message into transfer buffer n (TXBn). Does not automatically send
+  the message. If either id field is longer than it should be (std_id > 11 bits
+  or ext_id > 18 bits), the overflow bits will be ignored.
+*******************************************************************************/
+#define TXBnSIDH  buffer[1]
+#define TXBnSIDL  buffer[2]
+#define TXBnEID8  buffer[3]
+#define TXBnEID0  buffer[4]
+#define TXBnDLC   buffer[5]
+#define TX_EXIDE  ((message->mtype & 0x02) << 2)
+#define TX_RTR    ((message->mtype & 0x01) << 6)
+
+void load_tx_n(uint8_t n, can_message_t *message) {
+  switch (n) {
+    case 1:
+      buffer[0] = SPI_LOAD_TX1;
+      break;
+    case 2:
+      buffer[0] = SPI_LOAD_TX2;
+      break;
+    default:
+      buffer[0] = SPI_LOAD_TX0;
+  }
+
+  uint8_t std_id = message->std_id & 0x07FF; // 11 LSB
+  uint8_t ext_id = message->ext_id & 0x0003FFFF; // 18 LSB
+  uint8_t length = (message->length < 8) ? message->length : 8;
+
+  TXBnSIDH = (uint8_t) (std_id >> 3);
+  TXBnSIDL = (((uint8_t) std_id) << 5) | TX_EXIDE | ((uint8_t) (ext_id >> 16));
+  TXBnEID8 = (uint8_t)(ext_id >> 8);
+  TXBnEID0 = (uint8_t) ext_id;
+  TXBnDLC  = TX_RTR | length;
+
+  uint8_t i = 0;
+  uint8_t *transmit_data = &buffer[6];
+  uint8_t *message_data = &message->data[0];
+
+  while (i < length) {
+    transmit_data[i] = message_data[i];
+    i++;
+  }
+
+  spi_transfer_mcp2515(buffer, (6 + length));
+}
+
+/*******************************************************************************
   Reads the interrupt register (CANINTF) value into the *flags parameter. Each
   bit represents a different flag. The individual flags are defined in the
   mcp2515.h header.
@@ -90,16 +137,16 @@ void read_interrupt_flags(uint8_t *flags) {
   For standard id messages, the ext_id data field will not be modified, and for
   data length < 8 messages, the trailing data bytes will not be modified.
 *******************************************************************************/
-#define RXB1SIDH  buffer[1]
-#define RXB1SIDL  buffer[2]
-#define RXB1EID8  buffer[3]
-#define RXB1EID0  buffer[4]
-#define RXB1DLC   buffer[5]
-#define IDE       (RXB1SIDL & 0x08)
-#define SRR       (RXB1SIDL & 0x10)
-#define RTR       (RXB1DLC  & 0x40)
-#define EID17_16  (RXB1SIDL & 0x03)
-#define DLC3_0    (RXB1DLC  & 0x0F)
+#define RXBnSIDH  buffer[1]
+#define RXBnSIDL  buffer[2]
+#define RXBnEID8  buffer[3]
+#define RXBnEID0  buffer[4]
+#define RXBnDLC   buffer[5]
+#define IDE       (RXBnSIDL & 0x08)
+#define SRR       (RXBnSIDL & 0x10)
+#define RTR       (RXBnDLC  & 0x40)
+#define EID17_16  (RXBnSIDL & 0x03)
+#define DLC3_0    (RXBnDLC  & 0x0F)
 
 void read_receive_buffer_n(uint8_t n, can_message_t *message) {
   buffer[0] = (n == 0) ? SPI_READ_RX0 : SPI_READ_RX1;
@@ -115,12 +162,12 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
     // extended id, shift extended remote flag RTR into bit 0
     message->mtype = 0x10 | (RTR >> 6);
     message->ext_id = (((uint32_t) EID17_16) << 16)
-                        | (((uint32_t) RXB1EID8) << 8)
-                        | ((uint32_t) RXB1EID0);
+                        | (((uint32_t) RXBnEID8) << 8)
+                        | ((uint32_t) RXBnEID0);
   }
 
   // there will always be a standard id
-  message->std_id = (((uint16_t) RXB1SIDH) << 3) | (((uint16_t) RXB1SIDL) >> 5);
+  message->std_id = (((uint16_t) RXBnSIDH) << 3) | (((uint16_t) RXBnSIDL) >> 5);
 
   uint8_t length = DLC3_0;
   if (length > 8) length = 8; // ensure length is in the valid 0-8 byte range
