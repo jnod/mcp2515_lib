@@ -3,6 +3,19 @@
 static uint8_t buffer[14];
 
 /*******************************************************************************
+  Clears error register (EFLG) flags that correlate with a '1' in the bit_mask
+  parameter. Only the first two bits (receive overflow 0 and 1) are clearable.
+*******************************************************************************/
+void clear_error_flags(uint8_t bit_mask) {
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = ADDR_EFLG;
+  buffer[2] = bit_mask;
+  buffer[3] = 0x00;
+
+  spi_transfer_mcp2515(buffer, 4);
+}
+
+/*******************************************************************************
   Clears interrupt register (CANINTF) flags that correlate with a '1' in the
   bit_mask parameter.
 *******************************************************************************/
@@ -13,6 +26,18 @@ void clear_interrupt_flags(uint8_t bit_mask) {
   buffer[3] = 0x00;
 
   spi_transfer_mcp2515(buffer, 4);
+}
+
+/*******************************************************************************
+  Sets the value of the CANINTE register. Each bit of caninte_value enables or
+  disables an interrupt. See the datasheet for more detailed info.
+*******************************************************************************/
+void config_interrupts(uint8_t caninte_value) {
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_CANINTE;
+  buffer[3] = caninte_value;
+
+  spi_transfer_mcp2515(buffer, 3);
 }
 
 /*******************************************************************************
@@ -29,6 +54,20 @@ void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
   buffer[4] = cnf3;
 
   spi_transfer_mcp2515(buffer, 5);
+}
+
+/*******************************************************************************
+  Reads the interrupt register (CANINTF) value into the *flags parameter. Each
+  bit represents a different flag. The individual flags are defined in the
+  mcp2515.h header.
+*******************************************************************************/
+void read_error_flags(uint8_t *flags) {
+  buffer[0] = SPI_READ;
+  buffer[1] = ADDR_EFLG;
+
+  spi_transfer_mcp2515(buffer, 3);
+
+  *flags = buffer[2];
 }
 
 /*******************************************************************************
