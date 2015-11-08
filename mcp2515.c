@@ -71,10 +71,10 @@ void read_receive_buffer_n(uint8_t n, can_message_t *message) {
   // message->type = 0x0R (std_id), 0x1R (ext_id), R = remote flag
   if (IDE == 0) {
     // standard id, shift standard remote flag SRR into bit 0
-    message->type = SRR >> 4;
+    message->mtype = SRR >> 4;
   } else {
     // extended id, shift extended remote flag RTR into bit 0
-    message->type = 0x10 | (RTR >> 6);
+    message->mtype = 0x10 | (RTR >> 6);
     message->ext_id = (((uint32_t) EID17_16) << 16)
                         | (((uint32_t) RXB1EID8) << 8)
                         | ((uint32_t) RXB1EID0);
@@ -150,7 +150,8 @@ void set_mask(uint8_t addr, uint16_t std_id, uint32_t ext_id) {
 }
 
 /*******************************************************************************
-  Sets the mode of operation. Defaults to configuration mode on startup.
+  Sets the mode of operation. Defaults to configuration mode on startup. Each
+  mode can be found in the mcp2515.h header.
 *******************************************************************************/
 void set_mode(uint8_t mode) {
   buffer[0] = SPI_BIT_MODIFY;
