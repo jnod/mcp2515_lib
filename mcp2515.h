@@ -58,8 +58,11 @@ typedef struct {
   Detailed descriptions can be found in the mcp2515.c source file. Many of the
   parameters have been listed as definitions in this header file.
 *******************************************************************************/
+void clear_error_flags(uint8_t bit_mask);
 void clear_interrupt_flags(uint8_t bit_mask);
+void config_interrupts(uint8_t caninte_value);
 void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
+void read_error_flags(uint8_t *flags);
 void read_interrupt_flags(uint8_t *flags);
 void read_receive_buffer_n(uint8_t n, can_message_t *message);
 void set_ext_filter(uint8_t addr, uint32_t ext_id);
@@ -82,6 +85,7 @@ void set_mode(uint8_t mode);
 
   Specific info about each register can be found in the datasheet.
 *******************************************************************************/
+#define ADDR_CANINTE  0x2B // Interrupt Enable bits
 #define ADDR_CANINTF  0x2C // Interrupt Flags
 
 #define ADDR_CANCTRL  0x0F // Can Control
@@ -89,6 +93,8 @@ void set_mode(uint8_t mode);
 #define ADDR_CNF1     0x2A // Configuration
 #define ADDR_CNF2     0x29
 #define ADDR_CNF3     0x28
+
+#define ADDR_EFLG     0x2D
 
 #define ADDR_RXF0     0x00 // Filters for RXB0
 #define ADDR_RXF1     0x04
@@ -144,7 +150,7 @@ void set_mode(uint8_t mode);
 
 /*******************************************************************************
   SPI Commands
-  
+
 *******************************************************************************/
 #define SPI_BIT_MODIFY  0x05
 #define SPI_READ        0x03
