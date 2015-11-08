@@ -14,7 +14,7 @@ uint8_t fake_spi[14] = {0,1,0x08,3,4,0x43,1,2,3};
 
 int main() {
   test_read_interrupt_flags();
-  read_receive_buffer_n(1, &can_message);
+  read_rx_n(1, &can_message);
   print_can_message(can_message);
 
   return 0;
