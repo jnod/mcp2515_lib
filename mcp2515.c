@@ -35,7 +35,24 @@ void clear_interrupt_flags(uint8_t bit_mask) {
 void config_interrupts(uint8_t caninte_value) {
   buffer[0] = SPI_WRITE;
   buffer[1] = ADDR_CANINTE;
-  buffer[3] = caninte_value;
+  buffer[2] = caninte_value;
+
+  spi_transfer_mcp2515(buffer, 3);
+}
+
+/*******************************************************************************
+  Configures the receive control register.
+*******************************************************************************/
+void config_receive_ctrl(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_RXB0CTRL;
+  buffer[2] = rxb0ctrl;
+
+  spi_transfer_mcp2515(buffer, 3);
+
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_RXB1CTRL;
+  buffer[2] = rxb0ctrl;
 
   spi_transfer_mcp2515(buffer, 3);
 }
