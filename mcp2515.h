@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*******************************************************************************
   Callback Function
 
@@ -10,6 +14,7 @@
   to MCP2515 and from MCP2515 to *buf simultaneously, and then deselect MCP2515.
 *******************************************************************************/
 void spi_transfer_mcp2515(uint8_t *buf, uint8_t len);
+
 
 /*******************************************************************************
   CAN Message Data Type
@@ -61,6 +66,7 @@ typedef struct {
 void clear_error_flags(uint8_t bit_mask);
 void clear_interrupt_flags(uint8_t bit_mask);
 void config_interrupts(uint8_t caninte_value);
+void config_receive_ctrl(uint8_t rxb0ctrl, uint8_t rxb1ctrl);
 void config_timing(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
 int  load_tx_n(uint8_t n, can_message_t *message);
 void read_error_flags(uint8_t *flags);
@@ -97,6 +103,9 @@ void set_mode(uint8_t mode);
 #define ADDR_CNF3     0x28
 
 #define ADDR_EFLG     0x2D
+
+#define ADDR_RXB0CTRL 0x60
+#define ADDR_RXB1CTRL 0x70
 
 #define ADDR_RXF0     0x00 // Filters for RXB0
 #define ADDR_RXF1     0x04
@@ -165,5 +174,9 @@ void set_mode(uint8_t mode);
 #define SPI_RTS_TX1     0x82
 #define SPI_RTS_TX2     0x84
 #define SPI_WRITE       0x02
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
