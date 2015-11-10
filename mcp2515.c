@@ -41,7 +41,11 @@ void config_interrupts(uint8_t caninte_value) {
 }
 
 /*******************************************************************************
-  Configures the receive control register.
+  Configures the receive control registers RXB0CTRL and RXB1CTRL. These
+  registers determine the buffer operating mode (whether filters apply to
+  standard/extended identifiers, or whether all messages are received).
+  RXB0CTRL also has a bit to allow messages to overflow from RXB0 to RXB1. See
+  the datasheet for more detailed info.
 *******************************************************************************/
 void config_receive_ctrl(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
   buffer[0] = SPI_WRITE;
