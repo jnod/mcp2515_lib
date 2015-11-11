@@ -9,7 +9,7 @@ static void mcp2515_rtsTX(uint8_t rts_command);
 static uint8_t buffer[14];
 
 /*******************************************************************************
-  Clears error register (EFLG) flags that correlate with a '1' in the bit_mask
+  Clears error register flags (EFLG) that correlate with a '1' in the bit_mask
   parameter. Only the first two bits (receive overflow 0 and 1) are clearable.
 *******************************************************************************/
 void mcp2515_clearEFLG(uint8_t bit_mask) {
@@ -35,10 +35,10 @@ void mcp2515_clearCANINTF(uint8_t bit_mask) {
 }
 
 /*******************************************************************************
-  Each of the following configures one of the receive filters (RXFn) to filter
-  for the provided standard or extended id. The parameter is_ext_id determines
-  whether id is considered to be standard or extended. Only the 11 LSB of a
-  standard id or 18 LSB of an extended id are valid, the rest will be ignored.
+  Configures receive filter n (RXFn) to filter for the provided standard or
+  extended id. The parameter is_ext_id determines whether id is considered to
+  be standard or extended. Only the 11 LSB of a standard id or 18 LSB of an
+  extended id are valid, the rest will be ignored.
 *******************************************************************************/
 void mcp2515_configRXF0(uint32_t id, char is_ext_id) {
   mcp2515_configRXF(ADDR_RXF0, id, is_ext_id);
@@ -64,6 +64,152 @@ void mcp2515_configRXF5(uint32_t id, char is_ext_id) {
   mcp2515_configRXF(ADDR_RXF5, id, is_ext_id);
 }
 
+/*******************************************************************************
+  Configures one of the receive masks (RXMn). Only the 11 LSB of std_id and 18
+  LSB of ext_id are valid, the rest will be ignored.
+*******************************************************************************/
+void mcp2515_configRXM0(uint16_t std_id, uint32_t ext_id) {
+  mcp2515_configRXM(ADDR_RXM0, std_id, ext_id);
+}
+
+void mcp2515_configRXM1(uint16_t std_id, uint32_t ext_id) {
+  mcp2515_configRXM(ADDR_RXM1, std_id, ext_id);
+}
+
+/*******************************************************************************
+  Loads a message into transfer buffer n (TXBn). Does not automatically send
+  the message. Only the 11 LSB of std_id and 18 LSB of ext_id are valid, the
+  rest will be ignored.
+*******************************************************************************/
+void mcp2515_loadTX0(CanMessage *message) {
+  mcp2515_loadTX(SPI_LOAD_TX0, message);
+}
+
+void mcp2515_loadTX1(CanMessage *message) {
+  mcp2515_loadTX(SPI_LOAD_TX1, message);
+}
+
+void mcp2515_loadTX2(CanMessage *message) {
+  mcp2515_loadTX(SPI_LOAD_TX2, message);
+}
+
+/*******************************************************************************
+  Reads the interrupt register (CANINTF) value into the *flags parameter. Each
+  bit represents a different flag.
+*******************************************************************************/
+void mcp2515_readCANINTF(uint8_t *flags) {
+  buffer[0] = SPI_READ;
+  buffer[1] = ADDR_CANINTF;
+
+  mcp2515_spiTransfer(buffer, 3);
+
+  *flags = buffer[2];
+}
+
+/*******************************************************************************
+  Reads the error flag register (EFLG) value into the *flags parameter. Each
+  bit represents a different flag.
+*******************************************************************************/
+void mcp2515_readEFLG(uint8_t *flags) {
+  buffer[0] = SPI_READ;
+  buffer[1] = ADDR_EFLG;
+
+  mcp2515_spiTransfer(buffer, 3);
+
+  *flags = buffer[2];
+}
+
+/*******************************************************************************
+  Reads and decodes the value of receive buffer n (RXBn) and places the result
+  into the *message parameter. For standard id messages, the ext_id data field
+  will not be modified, and for data length < 8 messages, the trailing data
+  bytes will not be modified.
+*******************************************************************************/
+void mcp2515_readRX0(CanMessage *message) {
+  mcp2515_readRX(SPI_READ_RX0, message);
+}
+
+void mcp2515_readRX1(CanMessage *message) {
+  mcp2515_readRX(SPI_READ_RX1, message);
+}
+
+/*******************************************************************************
+  Request to send the message residing in transmit buffer n (TXBn).
+*******************************************************************************/
+void mcp2515_rtsTX0() {
+  mcp2515_rtsTX(SPI_RTS_TX0);
+}
+
+void mcp2515_rtsTX1() {
+  mcp2515_rtsTX(SPI_RTS_TX1);
+}
+
+void mcp2515_rtsTX2() {
+  mcp2515_rtsTX(SPI_RTS_TX2);
+}
+
+/*******************************************************************************
+  Sets the value of the CANINTE register. Each bit of caninte_value enables or
+  disables an interrupt. Refer to the datasheet for more detailed info.
+*******************************************************************************/
+void mcp2515_setCANINTE(uint8_t caninte_value) {
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_CANINTE;
+  buffer[2] = caninte_value;
+
+  mcp2515_spiTransfer(buffer, 3);
+}
+
+/*******************************************************************************
+  Sets the configuration registers (CNF1, CNF2, and CNF3) to the provided
+  values. These values determine the baud rate for different oscillators. A few
+  quick configurations are provided in the mcp2515_dfs.h header. Refer to the
+  datasheet for more detailed info.
+*******************************************************************************/
+void mcp2515_setCNFn(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_CNF1;
+  buffer[2] = cnf1;
+  buffer[3] = cnf2;
+  buffer[4] = cnf3;
+
+  mcp2515_spiTransfer(buffer, 5);
+}
+
+/*******************************************************************************
+  Sets the mode of operation. Defaults to configuration mode on startup. Each
+  mode can be found in the mcp2515_dfs.h header.
+*******************************************************************************/
+void mcp2515_setMode(uint8_t mode) {
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = ADDR_CANCTRL;
+  buffer[2] = 0xE0;
+  buffer[3] = mode;
+
+  mcp2515_spiTransfer(buffer, 4);
+}
+
+/*******************************************************************************
+  Configures the receive control registers RXB0CTRL and RXB1CTRL. Refer to the
+  datasheet for more detailed info.
+*******************************************************************************/
+void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_RXB0CTRL;
+  buffer[2] = rxb0ctrl;
+
+  mcp2515_spiTransfer(buffer, 3);
+
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_RXB1CTRL;
+  buffer[2] = rxb0ctrl;
+
+  mcp2515_spiTransfer(buffer, 3);
+}
+
+
+
+
 static void mcp2515_configRXF(uint8_t addr, uint32_t id, char is_ext_id) {
   if (is_ext_id) {
     id &= 0x0003FFFF; // clear 14 MSB (ext_id is only 18 bits long)
@@ -87,18 +233,6 @@ static void mcp2515_configRXF(uint8_t addr, uint32_t id, char is_ext_id) {
   }
 }
 
-/*******************************************************************************
-  Each of the following configures one of the receive masks (RXMn). Only the 11
-  LSB of std_id and 18 LSB of ext_id are valid, the rest will be ignored.
-*******************************************************************************/
-void mcp2515_configRXM0(uint16_t std_id, uint32_t ext_id) {
-  mcp2515_configRXM(ADDR_RXM0, std_id, ext_id);
-}
-
-void mcp2515_configRXM1(uint16_t std_id, uint32_t ext_id) {
-  mcp2515_configRXM(ADDR_RXM1, std_id, ext_id);
-}
-
 static void mcp2515_configRXM(uint8_t addr, uint16_t std_id, uint32_t ext_id) {
   std_id &= 0x07FF; // clear 5 MSB (std_id is only 11 bits long)
   ext_id &= 0x0003FFFF; // clear 14 MSB (ext_id is only 18 bits long)
@@ -113,34 +247,15 @@ static void mcp2515_configRXM(uint8_t addr, uint16_t std_id, uint32_t ext_id) {
   mcp2515_spiTransfer(buffer, 6);
 }
 
-/*******************************************************************************
-  Loads a message into transfer buffer n (TXBn). Does not automatically send
-  the message. If either id field is longer than it should be (std_id > 11 bits
-  or ext_id > 18 bits), the overflow bits will be ignored.
-
-  Returns 0 if successful, 1 otherwise.
-*******************************************************************************/
-void mcp2515_loadTX0(CanMessage *message) {
-  mcp2515_loadTX(SPI_LOAD_TX0, message);
-}
-
-void mcp2515_loadTX1(CanMessage *message) {
-  mcp2515_loadTX(SPI_LOAD_TX1, message);
-}
-
-void mcp2515_loadTX2(CanMessage *message) {
-  mcp2515_loadTX(SPI_LOAD_TX2, message);
-}
-
-#define TXBnSIDH  buffer[1]
-#define TXBnSIDL  buffer[2]
-#define TXBnEID8  buffer[3]
-#define TXBnEID0  buffer[4]
-#define TXBnDLC   buffer[5]
-#define TX_EXIDE  ((message->mtype & 0x02) << 2)
-#define TX_RTR    ((message->mtype & 0x01) << 6)
-
 static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
+  #define TXBnSIDH  buffer[1]
+  #define TXBnSIDL  buffer[2]
+  #define TXBnEID8  buffer[3]
+  #define TXBnEID0  buffer[4]
+  #define TXBnDLC   buffer[5]
+  #define TX_EXIDE  ((message->mtype & 0x02) << 2)
+  #define TX_RTR    ((message->mtype & 0x01) << 6)
+
   buffer[0] = load_command;
 
   uint8_t std_id = message->std_id & 0x07FF; // 11 LSB
@@ -165,46 +280,10 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   mcp2515_spiTransfer(buffer, (6 + length));
 }
 
-/*******************************************************************************
-  Reads the interrupt register (CANINTF) value into the *flags parameter. Each
-  bit represents a different flag. The individual flags are defined in the
-  mcp2515.h header.
-*******************************************************************************/
-void mcp2515_readCANINTF(uint8_t *flags) {
-  buffer[0] = SPI_READ;
-  buffer[1] = ADDR_CANINTF;
+static void mcp2515_rtsTX(uint8_t rts_command) {
+  buffer[0] = rts_command;
 
-  mcp2515_spiTransfer(buffer, 3);
-
-  *flags = buffer[2];
-}
-
-/*******************************************************************************
-  Reads the error flag register (EFLG) value into the *flags parameter. Each
-  bit represents a different flag. The individual flags are defined in the
-  mcp2515.h header.
-*******************************************************************************/
-void mcp2515_readEFLG(uint8_t *flags) {
-  buffer[0] = SPI_READ;
-  buffer[1] = ADDR_EFLG;
-
-  mcp2515_spiTransfer(buffer, 3);
-
-  *flags = buffer[2];
-}
-
-/*******************************************************************************
-  Reads and decodes the value of receive buffer 0 (RXB0) for n == 0 or receive
-  buffer 1 (RXB1) for n != 0 and places the result into the *message parameter.
-  For standard id messages, the ext_id data field will not be modified, and for
-  data length < 8 messages, the trailing data bytes will not be modified.
-*******************************************************************************/
-void mcp2515_readRX0(CanMessage *message) {
-  mcp2515_readRX(SPI_READ_RX0, message);
-}
-
-void mcp2515_readRX1(CanMessage *message) {
-  mcp2515_readRX(SPI_READ_RX1, message);
+  mcp2515_spiTransfer(buffer, 1);
 }
 
 static void mcp2515_readRX(uint8_t read_command, CanMessage *message) {
@@ -251,89 +330,4 @@ static void mcp2515_readRX(uint8_t read_command, CanMessage *message) {
     message_data[i] = receive_data[i];
     i++;
   }
-}
-
-/*******************************************************************************
-  Request to send transmit buffer n (TXBn).
-
-  Returns 0 if successful, 1 otherwise.
-*******************************************************************************/
-void mcp2515_rtsTX0() {
-  mcp2515_rtsTX(SPI_RTS_TX0);
-}
-
-void mcp2515_rtsTX1() {
-  mcp2515_rtsTX(SPI_RTS_TX1);
-}
-
-void mcp2515_rtsTX2() {
-  mcp2515_rtsTX(SPI_RTS_TX2);
-}
-
-static void mcp2515_rtsTX(uint8_t rts_command) {
-  buffer[0] = rts_command;
-
-  mcp2515_spiTransfer(buffer, 1);
-}
-
-/*******************************************************************************
-  Sets the value of the CANINTE register. Each bit of caninte_value enables or
-  disables an interrupt. See the datasheet for more detailed info.
-*******************************************************************************/
-void mcp2515_setCANINTE(uint8_t caninte_value) {
-  buffer[0] = SPI_WRITE;
-  buffer[1] = ADDR_CANINTE;
-  buffer[2] = caninte_value;
-
-  mcp2515_spiTransfer(buffer, 3);
-}
-
-/*******************************************************************************
-  Sets the configuration registers (CNF1, CNF2, and CNF3) to the provided
-  values. These values determine the baud rate for different oscillators. A few
-  quick configurations are provided in the mcp2515.h header. More info can be
-  found in the datasheet.
-*******************************************************************************/
-void mcp2515_setCNFn(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
-  buffer[0] = SPI_WRITE;
-  buffer[1] = ADDR_CNF1;
-  buffer[2] = cnf1;
-  buffer[3] = cnf2;
-  buffer[4] = cnf3;
-
-  mcp2515_spiTransfer(buffer, 5);
-}
-
-/*******************************************************************************
-  Sets the mode of operation. Defaults to configuration mode on startup. Each
-  mode can be found in the mcp2515.h header.
-*******************************************************************************/
-void mcp2515_setMode(uint8_t mode) {
-  buffer[0] = SPI_BIT_MODIFY;
-  buffer[1] = ADDR_CANCTRL;
-  buffer[2] = 0xE0;
-  buffer[3] = mode;
-
-  mcp2515_spiTransfer(buffer, 4);
-}
-
-/*******************************************************************************
-  Configures the receive control registers RXB0CTRL and RXB1CTRL. These
-  registers determine the buffer operating mode (whether filters apply to
-  standard/extended identifiers, or whether all messages are received).
-  RXB0CTRL also has a bit to allow messages to overflow from RXB0 to RXB1. See
-  the datasheet for more detailed info.
-*******************************************************************************/
-void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
-  buffer[0] = SPI_WRITE;
-  buffer[1] = ADDR_RXB0CTRL;
-  buffer[2] = rxb0ctrl;
-
-  mcp2515_spiTransfer(buffer, 3);
-
-  buffer[0] = SPI_WRITE;
-  buffer[1] = ADDR_RXB1CTRL;
-  buffer[2] = rxb0ctrl;
-
-  mcp2515_spiTransfer(buffer, 3);
 }

@@ -9,7 +9,7 @@ void mcp2515_spiTransfer(uint8_t *buf, uint8_t len) {
   // TODO: Deselect the MCP2515 if SPI.transfer(buf,len) doesn't
 }
 
-void print_can_message(can_message_t message) {
+void print_can_message(CanMessage message) {
   Serial.println(message.mtype, HEX);
   Serial.println(message.std_id, DEC);
   Serial.println(message.ext_id, DEC);
