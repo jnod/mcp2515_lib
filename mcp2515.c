@@ -2,8 +2,8 @@
 
 static void mcp2515_configRXF(uint8_t addr, uint32_t id, char is_ext_id);
 static void mcp2515_configRXM(uint8_t addr, uint16_t std_id, uint32_t ext_id);
-static void mcp2515_loadTX(uint8_t load_command, can_message_t *message);
-static void mcp2515_readRX(uint8_t read_command, can_message_t *message);
+static void mcp2515_loadTX(uint8_t load_command, CanMessage *message);
+static void mcp2515_readRX(uint8_t read_command, CanMessage *message);
 static void mcp2515_rtsTX(uint8_t rts_command);
 
 static uint8_t buffer[14];
@@ -120,15 +120,15 @@ static void mcp2515_configRXM(uint8_t addr, uint16_t std_id, uint32_t ext_id) {
 
   Returns 0 if successful, 1 otherwise.
 *******************************************************************************/
-void mcp2515_loadTX0(can_message_t *message) {
+void mcp2515_loadTX0(CanMessage *message) {
   mcp2515_loadTX(SPI_LOAD_TX0, message);
 }
 
-void mcp2515_loadTX1(can_message_t *message) {
+void mcp2515_loadTX1(CanMessage *message) {
   mcp2515_loadTX(SPI_LOAD_TX1, message);
 }
 
-void mcp2515_loadTX2(can_message_t *message) {
+void mcp2515_loadTX2(CanMessage *message) {
   mcp2515_loadTX(SPI_LOAD_TX2, message);
 }
 
@@ -140,7 +140,7 @@ void mcp2515_loadTX2(can_message_t *message) {
 #define TX_EXIDE  ((message->mtype & 0x02) << 2)
 #define TX_RTR    ((message->mtype & 0x01) << 6)
 
-static void mcp2515_loadTX(uint8_t load_command, can_message_t *message) {
+static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   buffer[0] = load_command;
 
   uint8_t std_id = message->std_id & 0x07FF; // 11 LSB
@@ -199,26 +199,26 @@ void mcp2515_readEFLG(uint8_t *flags) {
   For standard id messages, the ext_id data field will not be modified, and for
   data length < 8 messages, the trailing data bytes will not be modified.
 *******************************************************************************/
-void mcp2515_readRX0(can_message_t *message) {
+void mcp2515_readRX0(CanMessage *message) {
   mcp2515_readRX(SPI_READ_RX0, message);
 }
 
-void mcp2515_readRX1(can_message_t *message) {
+void mcp2515_readRX1(CanMessage *message) {
   mcp2515_readRX(SPI_READ_RX1, message);
 }
 
-#define RXBnSIDH  buffer[1]
-#define RXBnSIDL  buffer[2]
-#define RXBnEID8  buffer[3]
-#define RXBnEID0  buffer[4]
-#define RXBnDLC   buffer[5]
-#define IDE       (RXBnSIDL & 0x08)
-#define SRR       (RXBnSIDL & 0x10)
-#define RTR       (RXBnDLC  & 0x40)
-#define EID17_16  (RXBnSIDL & 0x03)
-#define DLC3_0    (RXBnDLC  & 0x0F)
+static void mcp2515_readRX(uint8_t read_command, CanMessage *message) {
+  #define RXBnSIDH  buffer[1]
+  #define RXBnSIDL  buffer[2]
+  #define RXBnEID8  buffer[3]
+  #define RXBnEID0  buffer[4]
+  #define RXBnDLC   buffer[5]
+  #define IDE       (RXBnSIDL & 0x08)
+  #define SRR       (RXBnSIDL & 0x10)
+  #define RTR       (RXBnDLC  & 0x40)
+  #define EID17_16  (RXBnSIDL & 0x03)
+  #define DLC3_0    (RXBnDLC  & 0x0F)
 
-static void mcp2515_readRX(uint8_t read_command, can_message_t *message) {
   buffer[0] = read_command;
 
   mcp2515_spiTransfer(buffer, 14);

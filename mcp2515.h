@@ -17,7 +17,7 @@ extern "C" {
     uint32_t  ext_id; // Only least significant 18 bits are used
     uint8_t   length;
     uint8_t   data[8];
-  } can_message_t;
+  } CanMessage;
 
   void mcp2515_clearEFLG(uint8_t bit_mask);
   void mcp2515_clearCANINTF(uint8_t bit_mask);
@@ -29,13 +29,13 @@ extern "C" {
   void mcp2515_configRXF5(uint32_t id, char is_ext_id);
   void mcp2515_configRXM0(uint16_t std_id, uint32_t ext_id);
   void mcp2515_configRXM1(uint16_t std_id, uint32_t ext_id);
-  void mcp2515_loadTX0(can_message_t *message);
-  void mcp2515_loadTX1(can_message_t *message);
-  void mcp2515_loadTX2(can_message_t *message);
+  void mcp2515_loadTX0(CanMessage *message);
+  void mcp2515_loadTX1(CanMessage *message);
+  void mcp2515_loadTX2(CanMessage *message);
   void mcp2515_readCANINTF(uint8_t *flags);
   void mcp2515_readEFLG(uint8_t *flags);
-  void mcp2515_readRX0(can_message_t *message);
-  void mcp2515_readRX1(can_message_t *message);
+  void mcp2515_readRX0(CanMessage *message);
+  void mcp2515_readRX1(CanMessage *message);
   void mcp2515_rtsTX0();
   void mcp2515_rtsTX1();
   void mcp2515_rtsTX2();
