@@ -5,16 +5,18 @@
 
 #include "../../mcp2515.h"
 
+int messageFromStr();
 void printJsonMessage();
 void *relayInput(void*);
 
-char run = 1;
+#define STR_SIZE 100
+
+uint8_t run = 1;
 CanMessage message;
 pthread_t read_thread;
-
-char str[100];
+char str[STR_SIZE];
 sem_t sem;
-char has_input = 0;
+uint8_t has_input = 0;
 
 int main() {
   // bcm2835_set_debug(1); // Test without using GPIO
@@ -39,7 +41,9 @@ int main() {
 
     if (has_input) {
       has_input = 0;
-      printf("%s\n", str);
+      if (messageFromStr() == 0) {
+        printJsonMessage();
+      }
       sem_post(&sem);
     }
   }
@@ -54,9 +58,48 @@ void mcp2515_spiTransfer(uint8_t *buf, uint8_t len) {
   // bcm2835_spi_transfern(buf, len); // will select mcp2515 during transfer
 }
 
+int messageFromStr() {
+  if (str[0] == 0 || str[0] == '\n') return 1;
+
+  uint32_t buffer[12] = {0};
+  uint16_t i = 0;
+  uint8_t buf_i = 0;
+  uint8_t char_val = 0;
+  uint8_t flag = 0; // prevents incrementing buf_i multiple times for extra spaces
+
+  while (str[i] != 0 && i < STR_SIZE) {
+    char_val = str[i] - '0'; // for chars < '0', the result will be a large num
+
+    if (char_val < 10) {
+      if (buf_i >= 12) return 1;
+      flag = 1;
+      buffer[buf_i] = buffer[buf_i] * 10 + char_val;
+    } else if (flag == 1){
+      buf_i++;
+      flag = 0;
+    }
+
+    i++;
+  }
+
+  message.mtype = buffer[0];
+  message.std_id = buffer[1];
+  message.ext_id = buffer[2];
+  message.length = buffer[3];
+
+  if (message.length > 8) return 1;
+
+  for (i = 0; i < message.length; i++) {
+    message.data[i] = buffer[i+4];
+  }
+
+  return 0;
+}
+
 void printJsonMessage() {
   printf("{\"mtype\":%u,\"std_id\":%u,\"ext_id\":%u,\"length\":%u,\"data\":[",
           message.mtype, message.std_id, message.ext_id, message.length);
+
   uint8_t i = 0;
   while (i < message.length) {
     printf("%u", message.data[i]);
@@ -64,10 +107,10 @@ void printJsonMessage() {
 
     if (i < message.length) {
       printf(",");
-    } else {
-      printf("]}\n");
     }
   }
+
+  printf("]}\n");
 }
 
 void *relayInput(void* v) {
