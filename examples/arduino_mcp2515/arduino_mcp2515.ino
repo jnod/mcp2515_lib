@@ -20,12 +20,12 @@ void print_can_message(can_message_t message) {
 void setup() {
   can_message = {MTYPE_EXTENDED_DATA, 5, 6, 2, {1,2}};
   pinMode(9, INPUT); // Used as the interrupt (INT) pin
-  
+
   Serial.begin(115200);
   Serial.println("Start Serial");
-  
+
   delay(50); // Allow the MCP2515 time to start. May not be necessary.
-  
+
   config_interrupts(0x03); // Inturrupt when a message is received
   config_timing(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
   config_receive_ctrl(0x60, 0x60); // Ignore filters, receive all messages
