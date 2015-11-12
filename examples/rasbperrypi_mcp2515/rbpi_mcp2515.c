@@ -82,9 +82,11 @@ int messageFromStr() {
     i++;
   }
 
+  if (buf_i == 0) return 1;
+
   message.mtype = buffer[0];
-  message.std_id = buffer[1];
-  message.ext_id = buffer[2];
+  message.sid = buffer[1];
+  message.eid = buffer[2];
   message.length = buffer[3];
 
   if (message.length > 8) return 1;
@@ -97,8 +99,8 @@ int messageFromStr() {
 }
 
 void printJsonMessage() {
-  printf("{\"mtype\":%u,\"std_id\":%u,\"ext_id\":%u,\"length\":%u,\"data\":[",
-          message.mtype, message.std_id, message.ext_id, message.length);
+  printf("{\"mtype\":%u,\"sid\":%u,\"eid\":%u,\"length\":%u,\"data\":[",
+          message.mtype, message.sid, message.eid, message.length);
 
   uint8_t i = 0;
   while (i < message.length) {
