@@ -1,7 +1,6 @@
 #include "mcp2515.h"
 
-static void mcp2515_configRXF(uint8_t addr, uint32_t id, char is_ext_id);
-static void mcp2515_configRXM(uint8_t addr, uint16_t std_id, uint32_t ext_id);
+static void mcp2515_configRX(uint8_t addr,uint16_t sid,uint32_t eid,char exide);
 static void mcp2515_loadTX(uint8_t load_command, CanMessage *message);
 static void mcp2515_readRX(uint8_t read_command, CanMessage *message);
 static void mcp2515_rtsTX(uint8_t rts_command);
@@ -35,50 +34,50 @@ void mcp2515_clearCANINTF(uint8_t bit_mask) {
 }
 
 /*******************************************************************************
-  Configures receive filter n (RXFn) to filter for the provided standard or
-  extended id. The parameter is_ext_id determines whether id is considered to
-  be standard or extended. Only the 11 LSB of a standard id or 18 LSB of an
-  extended id are valid, the rest will be ignored.
+  Configures receive filter n (RXFn). Only the 11 LSB of sid and 18 LSB of eid
+  are valid, the rest will be ignored. For standard ID filters (exide == 0),
+  the 16 LSB of eid will filter the first 2 data bytes.
 *******************************************************************************/
-void mcp2515_configRXF0(uint32_t id, char is_ext_id) {
-  mcp2515_configRXF(ADDR_RXF0, id, is_ext_id);
+void mcp2515_configRXF0(uint16_t sid, uint32_t eid, char exide) {
+  mcp2515_configRX(ADDR_RXF0, sid, eid, exide);
 }
 
-void mcp2515_configRXF1(uint32_t id, char is_ext_id) {
-  mcp2515_configRXF(ADDR_RXF1, id, is_ext_id);
+void mcp2515_configRXF1(uint16_t sid, uint32_t eid, char exide) {
+  mcp2515_configRX(ADDR_RXF1, sid, eid, exide);
 }
 
-void mcp2515_configRXF2(uint32_t id, char is_ext_id) {
-  mcp2515_configRXF(ADDR_RXF2, id, is_ext_id);
+void mcp2515_configRXF2(uint16_t sid, uint32_t eid, char exide) {
+  mcp2515_configRX(ADDR_RXF2, sid, eid, exide);
 }
 
-void mcp2515_configRXF3(uint32_t id, char is_ext_id) {
-  mcp2515_configRXF(ADDR_RXF3, id, is_ext_id);
+void mcp2515_configRXF3(uint16_t sid, uint32_t eid, char exide) {
+  mcp2515_configRX(ADDR_RXF3, sid, eid, exide);
 }
 
-void mcp2515_configRXF4(uint32_t id, char is_ext_id) {
-  mcp2515_configRXF(ADDR_RXF4, id, is_ext_id);
+void mcp2515_configRXF4(uint16_t sid, uint32_t eid, char exide) {
+  mcp2515_configRX(ADDR_RXF4, sid, eid, exide);
 }
 
-void mcp2515_configRXF5(uint32_t id, char is_ext_id) {
-  mcp2515_configRXF(ADDR_RXF5, id, is_ext_id);
+void mcp2515_configRXF5(uint16_t sid, uint32_t eid, char exide) {
+  mcp2515_configRX(ADDR_RXF5, sid, eid, exide);
 }
 
 /*******************************************************************************
-  Configures one of the receive masks (RXMn). Only the 11 LSB of std_id and 18
-  LSB of ext_id are valid, the rest will be ignored.
+  Configures receive mask n (RXMn). Only the 11 LSB of sid and 18 LSB of eid
+  are valid, the rest will be ignored. For standard ID messages, the 16 LSB of
+  eid will mask the first 2 data bytes.
 *******************************************************************************/
-void mcp2515_configRXM0(uint16_t std_id, uint32_t ext_id) {
-  mcp2515_configRXM(ADDR_RXM0, std_id, ext_id);
+void mcp2515_configRXM0(uint16_t sid, uint32_t eid) {
+  mcp2515_configRX(ADDR_RXM0, sid, eid, 0);
 }
 
-void mcp2515_configRXM1(uint16_t std_id, uint32_t ext_id) {
-  mcp2515_configRXM(ADDR_RXM1, std_id, ext_id);
+void mcp2515_configRXM1(uint16_t sid, uint32_t eid) {
+  mcp2515_configRX(ADDR_RXM1, sid, eid, 0);
 }
 
 /*******************************************************************************
   Loads a message into transfer buffer n (TXBn). Does not automatically send
-  the message. Only the 11 LSB of std_id and 18 LSB of ext_id are valid, the
+  the message. Only the 11 LSB of sid and 18 LSB of eid are valid, the
   rest will be ignored.
 *******************************************************************************/
 void mcp2515_loadTX0(CanMessage *message) {
@@ -121,7 +120,7 @@ void mcp2515_readEFLG(uint8_t *flags) {
 
 /*******************************************************************************
   Reads and decodes the value of receive buffer n (RXBn) and places the result
-  into the *message parameter. For standard id messages, the ext_id data field
+  into the *message parameter. For standard id messages, the eid data field
   will not be modified, and for data length < 8 messages, the trailing data
   bytes will not be modified.
 *******************************************************************************/
@@ -149,13 +148,13 @@ void mcp2515_rtsTX2() {
 }
 
 /*******************************************************************************
-  Sets the value of the CANINTE register. Each bit of caninte_value enables or
+  Sets the value of the CANINTE register. Each bit of caninte enables or
   disables an interrupt. Refer to the datasheet for more detailed info.
 *******************************************************************************/
-void mcp2515_setCANINTE(uint8_t caninte_value) {
+void mcp2515_setCANINTE(uint8_t caninte) {
   buffer[0] = SPI_WRITE;
   buffer[1] = ADDR_CANINTE;
-  buffer[2] = caninte_value;
+  buffer[2] = caninte;
 
   mcp2515_spiTransfer(buffer, 3);
 }
@@ -207,46 +206,27 @@ void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
   mcp2515_spiTransfer(buffer, 3);
 }
 
-
-
-
-static void mcp2515_configRXF(uint8_t addr, uint32_t id, char is_ext_id) {
-  if (is_ext_id) {
-    id &= 0x0003FFFF; // clear 14 MSB (ext_id is only 18 bits long)
-
-    buffer[0] = SPI_WRITE;
-    buffer[1] = addr + 1;
-    buffer[2] = 0x08 | ((uint8_t) (id >> 16));
-    buffer[3] = (uint8_t) (id >> 8);
-    buffer[4] = (uint8_t) id;
-
-    mcp2515_spiTransfer(buffer, 5);
-  } else {
-    id &= 0x000007FF; // clear 21 MSB (std_id is only 11 bits long)
-
-    buffer[0] = SPI_WRITE;
-    buffer[1] = addr;
-    buffer[2] = (uint8_t) (id >> 3);
-    buffer[3] = (((uint8_t) id) << 5);
-
-    mcp2515_spiTransfer(buffer, 4);
-  }
-}
-
-static void mcp2515_configRXM(uint8_t addr, uint16_t std_id, uint32_t ext_id) {
-  std_id &= 0x07FF; // clear 5 MSB (std_id is only 11 bits long)
-  ext_id &= 0x0003FFFF; // clear 14 MSB (ext_id is only 18 bits long)
+/*******************************************************************************
+  Configures the indicated receive filter or mask.
+*******************************************************************************/
+static void mcp2515_configRX(uint8_t addr,uint16_t sid,uint32_t eid,char exide){
+  sid &= 0x07FF; // clear 5 MSB (sid is only 11 bits long)
+  eid &= 0x0003FFFF; // clear 14 MSB (eid is only 18 bits long)
+  exide = (exide) ? 0x08 : 0x00;
 
   buffer[0] = SPI_WRITE;
   buffer[1] = addr;
-  buffer[2] = (uint8_t) (std_id >> 3);
-  buffer[3] = (((uint8_t) std_id) << 5) | ((uint8_t) (ext_id >> 16));
-  buffer[4] = (uint8_t)(ext_id >> 8);
-  buffer[5] = (uint8_t) ext_id;
+  buffer[2] = (uint8_t) (sid >> 3);
+  buffer[3] = (((uint8_t) sid) << 5) | exide | ((uint8_t) (eid >> 16));
+  buffer[4] = (uint8_t) (eid >> 8);
+  buffer[5] = (uint8_t) eid;
 
   mcp2515_spiTransfer(buffer, 6);
 }
 
+/*******************************************************************************
+  Loads a message into the indicated transfer buffer.
+*******************************************************************************/
 static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   #define TXBnSIDH  buffer[1]
   #define TXBnSIDL  buffer[2]
@@ -258,14 +238,14 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
 
   buffer[0] = load_command;
 
-  uint8_t std_id = message->std_id & 0x07FF; // 11 LSB
-  uint8_t ext_id = message->ext_id & 0x0003FFFF; // 18 LSB
+  uint8_t sid = message->sid & 0x07FF; // 11 LSB
+  uint8_t eid = message->eid & 0x0003FFFF; // 18 LSB
   uint8_t length = (message->length < 8) ? message->length : 8;
 
-  TXBnSIDH = (uint8_t) (std_id >> 3);
-  TXBnSIDL = (((uint8_t) std_id) << 5) | TX_EXIDE | ((uint8_t) (ext_id >> 16));
-  TXBnEID8 = (uint8_t)(ext_id >> 8);
-  TXBnEID0 = (uint8_t) ext_id;
+  TXBnSIDH = (uint8_t) (sid >> 3);
+  TXBnSIDL = (((uint8_t) sid) << 5) | TX_EXIDE | ((uint8_t) (eid >> 16));
+  TXBnEID8 = (uint8_t)(eid >> 8);
+  TXBnEID0 = (uint8_t) eid;
   TXBnDLC  = TX_RTR | length;
 
   uint8_t i = 0;
@@ -280,12 +260,18 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   mcp2515_spiTransfer(buffer, (6 + length));
 }
 
+/*******************************************************************************
+  Requests that the indicated transfer buffer be sent.
+*******************************************************************************/
 static void mcp2515_rtsTX(uint8_t rts_command) {
   buffer[0] = rts_command;
 
   mcp2515_spiTransfer(buffer, 1);
 }
 
+/*******************************************************************************
+  Reads the indicated receive buffer.
+*******************************************************************************/
 static void mcp2515_readRX(uint8_t read_command, CanMessage *message) {
   #define RXBnSIDH  buffer[1]
   #define RXBnSIDL  buffer[2]
@@ -303,20 +289,20 @@ static void mcp2515_readRX(uint8_t read_command, CanMessage *message) {
   mcp2515_spiTransfer(buffer, 14);
 
   // check IDE bit for id type, IDE == 0 indicates standard id
-  // message->type = 0x0R (std_id), 0x1R (ext_id), R = remote flag
+  // message->type = 0x0R (sid), 0x1R (eid), R = remote flag
   if (IDE == 0) {
     // standard id, shift standard remote flag SRR into bit 0
     message->mtype = SRR >> 4;
   } else {
     // extended id, shift extended remote flag RTR into bit 0
     message->mtype = 0x10 | (RTR >> 6);
-    message->ext_id = (((uint32_t) EID17_16) << 16)
+    message->eid = (((uint32_t) EID17_16) << 16)
                         | (((uint32_t) RXBnEID8) << 8)
                         | ((uint32_t) RXBnEID0);
   }
 
   // there will always be a standard id
-  message->std_id = (((uint16_t) RXBnSIDH) << 3) | (((uint16_t) RXBnSIDL) >> 5);
+  message->sid = (((uint16_t) RXBnSIDH) << 3) | (((uint16_t) RXBnSIDL) >> 5);
 
   uint8_t length = DLC3_0;
   if (length > 8) length = 8; // ensure length is in the valid 0-8 byte range
