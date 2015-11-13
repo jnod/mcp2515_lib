@@ -56,10 +56,10 @@ void mcp2515_clearEFLG(uint8_t bit_mask) {
 *******************************************************************************/
 void mcp2515_configCNFn(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
   buffer[0] = SPI_WRITE;
-  buffer[1] = ADDR_CNF1;
-  buffer[2] = cnf1;
+  buffer[1] = ADDR_CNF3;
+  buffer[2] = cnf3;
   buffer[3] = cnf2;
-  buffer[4] = cnf3;
+  buffer[4] = cnf1;
 
   mcp2515_spiTransfer(buffer, 5);
 }
@@ -107,7 +107,7 @@ void mcp2515_configRXM1(uint16_t sid, uint32_t eid) {
 }
 
 /*******************************************************************************
-  Configures the value of the CANCTRL register. Only the bottom 3 bits are
+  Configures the value of the TXRTSCTRL register. Only the bottom 3 bits are
   modifiable.
 *******************************************************************************/
 void mcp2515_configTXRTSCTRL(uint8_t txrtsctrl) {
@@ -242,8 +242,7 @@ void mcp2515_setMode(uint8_t mode) {
 }
 
 /*******************************************************************************
-  Configures the receive control registers RXB0CTRL and RXB1CTRL. Refer to the
-  datasheet for more detailed info.
+  Sets the receive control registers RXB0CTRL and RXB1CTRL.
 *******************************************************************************/
 void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
   buffer[0] = SPI_WRITE;
@@ -254,7 +253,7 @@ void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
 
   buffer[0] = SPI_WRITE;
   buffer[1] = ADDR_RXB1CTRL;
-  buffer[2] = rxb0ctrl;
+  buffer[2] = rxb1ctrl;
 
   mcp2515_spiTransfer(buffer, 3);
 }
@@ -263,8 +262,8 @@ void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl) {
   Configures the indicated receive filter or mask.
 *******************************************************************************/
 static void mcp2515_configRX(uint8_t addr,uint16_t sid,uint32_t eid,char exide){
-  sid &= 0x07FF; // clear 5 MSB (sid is only 11 bits long)
-  eid &= 0x0003FFFF; // clear 14 MSB (eid is only 18 bits long)
+  sid &= 0x07FF; // 11 LSB
+  eid &= 0x0003FFFF; // 18 LSB
   exide = (exide) ? 0x08 : 0x00;
 
   buffer[0] = SPI_WRITE;
@@ -286,8 +285,8 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   #define TXBnEID8  buffer[3]
   #define TXBnEID0  buffer[4]
   #define TXBnDLC   buffer[5]
-  #define TX_EXIDE  ((message->mtype & 0x02) << 2)
-  #define TX_RTR    ((message->mtype & 0x01) << 6)
+  #define EXIDE     ((message->mtype & 0x02) << 2)
+  #define RTR       ((message->mtype & 0x01) << 6)
 
   buffer[0] = load_command;
 
@@ -296,10 +295,10 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   uint8_t length = (message->length < 8) ? message->length : 8;
 
   TXBnSIDH = (uint8_t) (sid >> 3);
-  TXBnSIDL = (((uint8_t) sid) << 5) | TX_EXIDE | ((uint8_t) (eid >> 16));
+  TXBnSIDL = (((uint8_t) sid) << 5) | EXIDE | ((uint8_t) (eid >> 16));
   TXBnEID8 = (uint8_t)(eid >> 8);
   TXBnEID0 = (uint8_t) eid;
-  TXBnDLC  = TX_RTR | length;
+  TXBnDLC  = RTR | length;
 
   uint8_t i = 0;
   uint8_t *transmit_data = &buffer[6];
@@ -311,6 +310,8 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   }
 
   mcp2515_spiTransfer(buffer, (6 + length));
+
+  #undef RTR
 }
 
 /*******************************************************************************
@@ -346,7 +347,7 @@ static void mcp2515_readRX(uint8_t read_command, CanMessage *message) {
   }
 
   // there will always be a standard id
-  message->sid = (((uint16_t) RXBnSIDH) << 3) | (((uint16_t) RXBnSIDL) >> 5);
+  message->sid = (((uint16_t) RXBnSIDH) << 3) | ((uint16_t) (RXBnSIDL >> 5));
 
   uint8_t length = DLC3_0;
   if (length > 8) length = 8; // ensure length is in the valid 0-8 byte range
