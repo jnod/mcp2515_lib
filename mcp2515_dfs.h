@@ -92,6 +92,7 @@
 #define ADDR_RXF5             0x18
 #define ADDR_RXM0             0x20 // Mask for RXB0
 #define ADDR_RXM1             0x24 // Mask for RXB1
+#define ADDR_TXRTSCTRL        0x0D // TXnRTS Pin Control
 
 // mcp2515 spi commands
 #define SPI_BIT_MODIFY        0x05
