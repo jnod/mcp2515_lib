@@ -34,7 +34,7 @@ extern "C" {
   /* Client must implement this function. Select the mcp2515, transfer the
   buffer, and then deselect the mcp2515 */
   void mcp2515_spiTransfer(uint8_t *buf, uint8_t len);
-  
+
   void mcp2515_clearCANINTF(uint8_t bit_mask);
   void mcp2515_clearEFLG(uint8_t bit_mask);
   // config commands only work in configuration mode
@@ -47,7 +47,7 @@ extern "C" {
   void mcp2515_configRXF5(uint16_t sid, uint32_t eid, char exide);
   void mcp2515_configRXM0(uint16_t sid, uint32_t eid);
   void mcp2515_configRXM1(uint16_t sid, uint32_t eid);
-  void mcp2515_configTXRTSCTRL(uint8_t bit_mask, uint8_t txrtsctrl);
+  void mcp2515_configTXRTSCTRL(uint8_t txrtsctrl);
   void mcp2515_loadTX0(CanMessage *message);
   void mcp2515_loadTX1(CanMessage *message);
   void mcp2515_loadTX2(CanMessage *message);
@@ -59,9 +59,8 @@ extern "C" {
   void mcp2515_rtsTX0();
   void mcp2515_rtsTX1();
   void mcp2515_rtsTX2();
-  // set commands work in every mode
-  void mcp2515_setCANCTRL(uint8_t bit_mask, uint8_t canctrl);
-  void mcp2515_setCANINTE(uint8_t bit_mask, uint8_t caninte);
+  void mcp2515_setCANCTRL(uint8_t canctrl);
+  void mcp2515_setCANINTE(uint8_t caninte);
   void mcp2515_setMode(uint8_t mode);
   void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl);
 #ifdef __cplusplus

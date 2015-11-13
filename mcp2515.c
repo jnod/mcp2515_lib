@@ -107,17 +107,15 @@ void mcp2515_configRXM1(uint16_t sid, uint32_t eid) {
 }
 
 /*******************************************************************************
-  Configures the value of the CANCTRL register; bit_mask selects which bits are
-  set, and canctrl determines what the value will be. Only the bottom 3 bits
-  are modifiable.
+  Configures the value of the CANCTRL register. Only the bottom 3 bits are
+  modifiable.
 *******************************************************************************/
-void mcp2515_configTXRTSCTRL(uint8_t bit_mask, uint8_t txrtsctrl) {
-  buffer[0] = SPI_BIT_MODIFY;
+void mcp2515_configTXRTSCTRL(uint8_t txrtsctrl) {
+  buffer[0] = SPI_WRITE;
   buffer[1] = ADDR_TXRTSCTRL;
-  buffer[2] = bit_mask;
-  buffer[3] = txrtsctrl;
+  buffer[2] = txrtsctrl;
 
-  mcp2515_spiTransfer(buffer, 4);
+  mcp2515_spiTransfer(buffer, 3);
 }
 
 /*******************************************************************************
@@ -209,29 +207,25 @@ void mcp2515_rtsTX2() {
 }
 
 /*******************************************************************************
-  Sets the value of the CANCTRL register; bit_mask selects which bits are set,
-  and canctrl determines what the value will be.
+  Sets the value of the CANCTRL register.
 *******************************************************************************/
-void mcp2515_setCANCTRL(uint8_t bit_mask, uint8_t canctrl) {
-  buffer[0] = SPI_BIT_MODIFY;
+void mcp2515_setCANCTRL(uint8_t canctrl) {
+  buffer[0] = SPI_WRITE;
   buffer[1] = ADDR_CANCTRL;
-  buffer[2] = bit_mask;
-  buffer[3] = canctrl;
+  buffer[2] = canctrl;
 
-  mcp2515_spiTransfer(buffer, 4);
+  mcp2515_spiTransfer(buffer, 3);
 }
 
 /*******************************************************************************
-  Sets the value of the CANINTE register; bit_mask selects which bits are set,
-  and caninte determines what the value will be.
+  Sets the value of the CANINTE register.
 *******************************************************************************/
-void mcp2515_setCANINTE(uint8_t bit_mask, uint8_t caninte) {
-  buffer[0] = SPI_BIT_MODIFY;
+void mcp2515_setCANINTE(uint8_t caninte) {
+  buffer[0] = SPI_WRITE;
   buffer[1] = ADDR_CANINTE;
-  buffer[2] = bit_mask;
-  buffer[3] = caninte;
+  buffer[2] = caninte;
 
-  mcp2515_spiTransfer(buffer, 4);
+  mcp2515_spiTransfer(buffer, 3);
 }
 
 /*******************************************************************************
@@ -239,7 +233,12 @@ void mcp2515_setCANINTE(uint8_t bit_mask, uint8_t caninte) {
   mode can be found in the mcp2515_dfs.h header.
 *******************************************************************************/
 void mcp2515_setMode(uint8_t mode) {
-  mcp2515_setCANCTRL(mode, 0xE0);
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = ADDR_CANCTRL;
+  buffer[2] = 0xE0;
+  buffer[3] = mode;
+
+  mcp2515_spiTransfer(buffer, 4);
 }
 
 /*******************************************************************************
