@@ -26,8 +26,8 @@ int main() {
   // bcm2835_spi_begin();
   // bcm2835_spi_chipSelect(BCM2835_SPI_CS0);
 
+  mcp2515_configCNFn(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
   mcp2515_setCANINTE(0x03); // Inturrupt when a message is received
-  mcp2515_setCNFn(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
   mcp2515_setRXBnCTRL(0x60, 0x60); // Ignore filters, receive all messages
   mcp2515_setMode(MODE_LOOPBACK); // Loopback sends messages to itself for testing
 
