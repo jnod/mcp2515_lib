@@ -3,7 +3,6 @@
 static void mcp2515_configRX(uint8_t addr,uint16_t sid,uint32_t eid,char exide);
 static void mcp2515_loadTX(uint8_t load_command, CanMessage *message);
 static void mcp2515_readRX(uint8_t read_command, CanMessage *message);
-static void mcp2515_rtsTX(uint8_t rts_command);
 
 static uint8_t buffer[14];
 
@@ -31,6 +30,22 @@ void mcp2515_clearCANINTF(uint8_t bit_mask) {
   buffer[3] = 0x00;
 
   mcp2515_spiTransfer(buffer, 4);
+}
+
+/*******************************************************************************
+  Configures the configuration registers (CNF1, CNF2, and CNF3) to the provided
+  values. These values determine the baud rate for different oscillators. A few
+  quick configurations are provided in the mcp2515_dfs.h header. Refer to the
+  datasheet for more detailed info.
+*******************************************************************************/
+void mcp2515_configCNFn(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
+  buffer[0] = SPI_WRITE;
+  buffer[1] = ADDR_CNF1;
+  buffer[2] = cnf1;
+  buffer[3] = cnf2;
+  buffer[4] = cnf3;
+
+  mcp2515_spiTransfer(buffer, 5);
 }
 
 /*******************************************************************************
@@ -136,15 +151,21 @@ void mcp2515_readRX1(CanMessage *message) {
   Request to send the message residing in transmit buffer n (TXBn).
 *******************************************************************************/
 void mcp2515_rtsTX0() {
-  mcp2515_rtsTX(SPI_RTS_TX0);
+  buffer[0] = SPI_RTS_TX0;
+
+  mcp2515_spiTransfer(buffer, 1);
 }
 
 void mcp2515_rtsTX1() {
-  mcp2515_rtsTX(SPI_RTS_TX1);
+  buffer[0] = SPI_RTS_TX1;
+
+  mcp2515_spiTransfer(buffer, 1);
 }
 
 void mcp2515_rtsTX2() {
-  mcp2515_rtsTX(SPI_RTS_TX2);
+  buffer[0] = SPI_RTS_TX2;
+
+  mcp2515_spiTransfer(buffer, 1);
 }
 
 /*******************************************************************************
@@ -157,22 +178,6 @@ void mcp2515_setCANINTE(uint8_t caninte) {
   buffer[2] = caninte;
 
   mcp2515_spiTransfer(buffer, 3);
-}
-
-/*******************************************************************************
-  Sets the configuration registers (CNF1, CNF2, and CNF3) to the provided
-  values. These values determine the baud rate for different oscillators. A few
-  quick configurations are provided in the mcp2515_dfs.h header. Refer to the
-  datasheet for more detailed info.
-*******************************************************************************/
-void mcp2515_setCNFn(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3) {
-  buffer[0] = SPI_WRITE;
-  buffer[1] = ADDR_CNF1;
-  buffer[2] = cnf1;
-  buffer[3] = cnf2;
-  buffer[4] = cnf3;
-
-  mcp2515_spiTransfer(buffer, 5);
 }
 
 /*******************************************************************************
@@ -258,15 +263,6 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
   }
 
   mcp2515_spiTransfer(buffer, (6 + length));
-}
-
-/*******************************************************************************
-  Requests that the indicated transfer buffer be sent.
-*******************************************************************************/
-static void mcp2515_rtsTX(uint8_t rts_command) {
-  buffer[0] = rts_command;
-
-  mcp2515_spiTransfer(buffer, 1);
 }
 
 /*******************************************************************************

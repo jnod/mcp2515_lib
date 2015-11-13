@@ -21,6 +21,8 @@ extern "C" {
 
   void mcp2515_clearEFLG(uint8_t bit_mask);
   void mcp2515_clearCANINTF(uint8_t bit_mask);
+  // config commands only work in configuration mode
+  void mcp2515_configCNFn(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
   void mcp2515_configRXF0(uint16_t sid, uint32_t eid, char exide);
   void mcp2515_configRXF1(uint16_t sid, uint32_t eid, char exide);
   void mcp2515_configRXF2(uint16_t sid, uint32_t eid, char exide);
@@ -39,8 +41,8 @@ extern "C" {
   void mcp2515_rtsTX0();
   void mcp2515_rtsTX1();
   void mcp2515_rtsTX2();
+  // set commands work in every mode
   void mcp2515_setCANINTE(uint8_t caninte);
-  void mcp2515_setCNFn(uint8_t cnf1, uint8_t cnf2, uint8_t cnf3);
   void mcp2515_setMode(uint8_t mode);
   void mcp2515_setRXBnCTRL(uint8_t rxb0ctrl, uint8_t rxb1ctrl);
 #ifdef __cplusplus
