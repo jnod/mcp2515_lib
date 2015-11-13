@@ -23,12 +23,12 @@ static void mcp2515_readRX(uint8_t read_command, CanMessage *message);
 static uint8_t buffer[14];
 
 /*******************************************************************************
-  Clears error register flags (EFLG) that correlate with a '1' in the bit_mask
-  parameter. Only the first two bits (receive overflow 0 and 1) are clearable.
+  Clears interrupt register (CANINTF) flags that correlate with a '1' in the
+  bit_mask parameter.
 *******************************************************************************/
-void mcp2515_clearEFLG(uint8_t bit_mask) {
+void mcp2515_clearCANINTF(uint8_t bit_mask) {
   buffer[0] = SPI_BIT_MODIFY;
-  buffer[1] = ADDR_EFLG;
+  buffer[1] = ADDR_CANINTF;
   buffer[2] = bit_mask;
   buffer[3] = 0x00;
 
@@ -36,12 +36,12 @@ void mcp2515_clearEFLG(uint8_t bit_mask) {
 }
 
 /*******************************************************************************
-  Clears interrupt register (CANINTF) flags that correlate with a '1' in the
-  bit_mask parameter.
+  Clears error register flags (EFLG) that correlate with a '1' in the bit_mask
+  parameter. Only the first two bits (receive overflow 0 and 1) are clearable.
 *******************************************************************************/
-void mcp2515_clearCANINTF(uint8_t bit_mask) {
+void mcp2515_clearEFLG(uint8_t bit_mask) {
   buffer[0] = SPI_BIT_MODIFY;
-  buffer[1] = ADDR_CANINTF;
+  buffer[1] = ADDR_EFLG;
   buffer[2] = bit_mask;
   buffer[3] = 0x00;
 
@@ -107,6 +107,20 @@ void mcp2515_configRXM1(uint16_t sid, uint32_t eid) {
 }
 
 /*******************************************************************************
+  Configures the value of the CANCTRL register; bit_mask selects which bits are
+  set, and canctrl determines what the value will be. Only the bottom 3 bits
+  are modifiable.
+*******************************************************************************/
+void mcp2515_configTXRTSCTRL(uint8_t bit_mask, uint8_t txrtsctrl) {
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = ADDR_TXRTSCTRL;
+  buffer[2] = bit_mask;
+  buffer[3] = txrtsctrl;
+
+  mcp2515_spiTransfer(buffer, 4);
+}
+
+/*******************************************************************************
   Loads a message into transfer buffer n (TXBn). Does not automatically send
   the message. Only the 11 LSB of sid and 18 LSB of eid are valid, the
   rest will be ignored.
@@ -124,29 +138,27 @@ void mcp2515_loadTX2(CanMessage *message) {
 }
 
 /*******************************************************************************
-  Reads the interrupt register (CANINTF) value into the *flags parameter. Each
-  bit represents a different flag.
+  Reads the value of CANINTF and places the result into *canintf.
 *******************************************************************************/
-void mcp2515_readCANINTF(uint8_t *flags) {
+void mcp2515_readCANINTF(uint8_t *canintf) {
   buffer[0] = SPI_READ;
   buffer[1] = ADDR_CANINTF;
 
   mcp2515_spiTransfer(buffer, 3);
 
-  *flags = buffer[2];
+  *canintf = buffer[2];
 }
 
 /*******************************************************************************
-  Reads the error flag register (EFLG) value into the *flags parameter. Each
-  bit represents a different flag.
+  Reads the value of EFLG and places the result into *eflg.
 *******************************************************************************/
-void mcp2515_readEFLG(uint8_t *flags) {
+void mcp2515_readEFLG(uint8_t *eflg) {
   buffer[0] = SPI_READ;
   buffer[1] = ADDR_EFLG;
 
   mcp2515_spiTransfer(buffer, 3);
 
-  *flags = buffer[2];
+  *eflg = buffer[2];
 }
 
 /*******************************************************************************
@@ -161,6 +173,18 @@ void mcp2515_readRX0(CanMessage *message) {
 
 void mcp2515_readRX1(CanMessage *message) {
   mcp2515_readRX(SPI_READ_RX1, message);
+}
+
+/*******************************************************************************
+  Reads the value of TXRTSCTRL and places the result in *txrtsctrl.
+*******************************************************************************/
+void mcp2515_readTXRTSCTRL(uint8_t *txrtsctrl) {
+  buffer[0] = SPI_READ;
+  buffer[1] = ADDR_TXRTSCTRL;
+
+  mcp2515_spiTransfer(buffer, 3);
+
+  *txrtsctrl = buffer[2];
 }
 
 /*******************************************************************************
@@ -185,15 +209,29 @@ void mcp2515_rtsTX2() {
 }
 
 /*******************************************************************************
-  Sets the value of the CANINTE register. Each bit of caninte enables or
-  disables an interrupt. Refer to the datasheet for more detailed info.
+  Sets the value of the CANCTRL register; bit_mask selects which bits are set,
+  and canctrl determines what the value will be.
 *******************************************************************************/
-void mcp2515_setCANINTE(uint8_t caninte) {
-  buffer[0] = SPI_WRITE;
-  buffer[1] = ADDR_CANINTE;
-  buffer[2] = caninte;
+void mcp2515_setCANCTRL(uint8_t bit_mask, uint8_t canctrl) {
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = ADDR_CANCTRL;
+  buffer[2] = bit_mask;
+  buffer[3] = canctrl;
 
-  mcp2515_spiTransfer(buffer, 3);
+  mcp2515_spiTransfer(buffer, 4);
+}
+
+/*******************************************************************************
+  Sets the value of the CANINTE register; bit_mask selects which bits are set,
+  and caninte determines what the value will be.
+*******************************************************************************/
+void mcp2515_setCANINTE(uint8_t bit_mask, uint8_t caninte) {
+  buffer[0] = SPI_BIT_MODIFY;
+  buffer[1] = ADDR_CANINTE;
+  buffer[2] = bit_mask;
+  buffer[3] = caninte;
+
+  mcp2515_spiTransfer(buffer, 4);
 }
 
 /*******************************************************************************
@@ -201,12 +239,7 @@ void mcp2515_setCANINTE(uint8_t caninte) {
   mode can be found in the mcp2515_dfs.h header.
 *******************************************************************************/
 void mcp2515_setMode(uint8_t mode) {
-  buffer[0] = SPI_BIT_MODIFY;
-  buffer[1] = ADDR_CANCTRL;
-  buffer[2] = 0xE0;
-  buffer[3] = mode;
-
-  mcp2515_spiTransfer(buffer, 4);
+  mcp2515_setCANCTRL(mode, 0xE0);
 }
 
 /*******************************************************************************
