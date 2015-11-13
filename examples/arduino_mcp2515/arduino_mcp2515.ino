@@ -11,8 +11,8 @@ void mcp2515_spiTransfer(uint8_t *buf, uint8_t len) {
 
 void print_can_message(CanMessage message) {
   Serial.println(message.mtype, HEX);
-  Serial.println(message.std_id, DEC);
-  Serial.println(message.ext_id, DEC);
+  Serial.println(message.sid, DEC);
+  Serial.println(message.eid, DEC);
   Serial.println(message.length, DEC);
   // TODO: Print data
 }

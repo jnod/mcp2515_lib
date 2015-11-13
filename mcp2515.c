@@ -238,8 +238,8 @@ static void mcp2515_loadTX(uint8_t load_command, CanMessage *message) {
 
   buffer[0] = load_command;
 
-  uint8_t sid = message->sid & 0x07FF; // 11 LSB
-  uint8_t eid = message->eid & 0x0003FFFF; // 18 LSB
+  uint16_t sid = message->sid & 0x07FF; // 11 LSB
+  uint32_t eid = message->eid & 0x0003FFFF; // 18 LSB
   uint8_t length = (message->length < 8) ? message->length : 8;
 
   TXBnSIDH = (uint8_t) (sid >> 3);
@@ -295,7 +295,7 @@ static void mcp2515_readRX(uint8_t read_command, CanMessage *message) {
     message->mtype = SRR >> 4;
   } else {
     // extended id, shift extended remote flag RTR into bit 0
-    message->mtype = 0x10 | (RTR >> 6);
+    message->mtype = 0x02 | (RTR >> 6);
     message->eid = (((uint32_t) EID17_16) << 16)
                         | (((uint32_t) RXBnEID8) << 8)
                         | ((uint32_t) RXBnEID0);

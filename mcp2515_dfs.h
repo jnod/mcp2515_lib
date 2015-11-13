@@ -2,10 +2,10 @@
 #define MCP2515_LIB_DFS_H_
 
 // Message types
-#define MTYPE_STANDARD_DATA   0x00
-#define MTYPE_STANDARD_REMOTE 0x01
-#define MTYPE_EXTENDED_DATA   0x10
-#define MTYPE_EXTENDED_REMOTE 0x11
+#define MTYPE_STANDARD_DATA   0
+#define MTYPE_STANDARD_REMOTE 1
+#define MTYPE_EXTENDED_DATA   2
+#define MTYPE_EXTENDED_REMOTE 3
 
 // Macros that determine if a CANINTF flag is set
 #define IS_MERRF_SET(canintf) (canintf & 0x80)
