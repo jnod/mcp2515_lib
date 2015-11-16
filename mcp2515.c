@@ -186,6 +186,15 @@ void mcp2515_readTXRTSCTRL(uint8_t *txrtsctrl) {
 }
 
 /*******************************************************************************
+  Sets each register to the default value.
+*******************************************************************************/
+void mcp2515_reset() {
+  buffer[0] = SPI_RESET;
+
+  mcp2515_spiTransfer(buffer, 1);
+}
+
+/*******************************************************************************
   Request to send the message residing in transmit buffer n (TXBn).
 *******************************************************************************/
 void mcp2515_rtsTX0() {
