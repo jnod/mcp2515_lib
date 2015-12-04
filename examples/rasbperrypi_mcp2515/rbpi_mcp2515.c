@@ -38,12 +38,13 @@ void setup() {
   mcp2515_configCNFn(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
   mcp2515_setCANINTE(0x03); // Inturrupt when a message is received
   mcp2515_setRXBnCTRL(0x60, 0x60); // Ignore filters, receive all messages
-  mcp2515_setMode(MODE_LOOPBACK); // Loopback sends messages to itself for testing
+  // mcp2515_setMode(MODE_LOOPBACK); // Loopback sends messages to itself for testing
+  mcp2515_setMode(MODE_NORMAL); // Normal mode allows communication over CAN
 }
 
 void loop() {
   if (bcm2835_gpio_lev(INT) == LOW) {
-    printf("Interrupt\n");
+    printf("Read: ");
     mcp2515_readRX0(&message);
     printJsonCanMessage();
     mcp2515_clearCANINTF(0xFF);
@@ -52,6 +53,7 @@ void loop() {
   if (has_commandline_input) {
     has_commandline_input = 0;
     if (messageFromStr() == 0) {
+      printf("Transmit: ");
       printJsonCanMessage();
 
       mcp2515_loadTX0(&message);
