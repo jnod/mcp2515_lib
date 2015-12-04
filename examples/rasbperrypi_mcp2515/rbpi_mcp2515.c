@@ -1,61 +1,84 @@
-// #include <bcm2835.h>
+#include <bcm2835.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
 
 #include "../../mcp2515.h"
 
-int messageFromStr();
-void printJsonMessage();
+/* The following are use for command line input *******************************/
+#define STR_SIZE  100
+
 void *relayInput(void*);
 
-#define STR_SIZE 100
-
 uint8_t run = 1;
-CanMessage message;
 pthread_t read_thread;
 char str[STR_SIZE];
 sem_t sem;
-uint8_t has_input = 0;
+uint8_t has_commandline_input = 0;
+/******************************************************************************/
 
-int main() {
+#define INT       RPI_V2_GPIO_P1_22 // pin 22 (maps to RBPI GPIO 25)
+
+int messageFromStr();
+void printJsonCanMessage();
+
+static CanMessage message;
+
+void setup() {
   // bcm2835_set_debug(1); // Test without using GPIO
-  // if (!bcm2835_init()) return 1;
-  //
-  // bcm2835_gpio_fsel(RPI_V2_GPIO_P1_22, BCM2835_GPIO_FSEL_OUTP);
-  // bcm2835_spi_begin();
-  // bcm2835_spi_chipSelect(BCM2835_SPI_CS0);
+  if (!bcm2835_init()) return 1;
 
+  bcm2835_gpio_fsel(INT, BCM2835_GPIO_FSEL_INPT); // set INT as input
+  bcm2835_spi_begin();
+  bcm2835_spi_chipSelect(BCM2835_SPI_CS0);
+
+  delay(100); // Allows the mcp2515 to initialize
+
+  mcp2515_reset();
   mcp2515_configCNFn(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
   mcp2515_setCANINTE(0x03); // Inturrupt when a message is received
   mcp2515_setRXBnCTRL(0x60, 0x60); // Ignore filters, receive all messages
   mcp2515_setMode(MODE_LOOPBACK); // Loopback sends messages to itself for testing
+}
+
+void loop() {
+  if (bcm2835_gpio_lev(INT) == LOW) {
+    printf("Interrupt\n");
+    mcp2515_readRX0(&message);
+    printJsonCanMessage();
+    mcp2515_clearCANINTF(0xFF);
+  }
+
+  if (has_commandline_input) {
+    has_commandline_input = 0;
+    if (messageFromStr() == 0) {
+      printJsonCanMessage();
+
+      mcp2515_loadTX0(&message);
+      mcp2515_rtsTX0();
+    }
+    sem_post(&sem);
+  }
+}
+
+int main() {
+  setup();
 
   if (pthread_create(&read_thread, NULL, relayInput, NULL)) return 1;
   if (sem_init(&sem, 0, 1)) return 1;
 
   while(run) {
-    // if (!digitalRead(9)) {
-    //   Serial.println("Interrupt");
-    // }
-
-    if (has_input) {
-      has_input = 0;
-      if (messageFromStr() == 0) {
-        printJsonMessage();
-      }
-      sem_post(&sem);
-    }
+    loop();
   }
 
-  // bcm2835_spi_end();
-  // bcm2835_close();
+  bcm2835_spi_end();
+  bcm2835_close();
 
   return 0;
 }
 
 void mcp2515_spiTransfer(uint8_t *buf, uint8_t len) {
-  // bcm2835_spi_transfern(buf, len); // will select mcp2515 during transfer
+  bcm2835_spi_transfern(buf, len); // will select mcp2515 during transfer
 }
 
 int messageFromStr() {
@@ -98,7 +121,7 @@ int messageFromStr() {
   return 0;
 }
 
-void printJsonMessage() {
+void printJsonCanMessage() {
   printf("{\"mtype\":%u,\"sid\":%u,\"eid\":%u,\"length\":%u,\"data\":[",
           message.mtype, message.sid, message.eid, message.length);
 
@@ -119,7 +142,7 @@ void *relayInput(void* v) {
   while(run) {
     sem_wait(&sem);
     fgets(str, 100, stdin);
-    has_input = 1;
+    has_commandline_input = 1;
   }
 
   return NULL;
