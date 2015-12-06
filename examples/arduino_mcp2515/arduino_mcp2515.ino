@@ -1,22 +1,28 @@
 #include <SPI.h>
 #include <mcp2515.h>
 
+#define AUTH  8
 #define INT   9
 #define SS    10
 #define MOSI  11
 #define MISO  12
 #define SCK   13
 
+#define DEVICE_ID 0x0005 // 1234 in decimal
+
 void printCanMessage();
 
-static CanMessage message = {MTYPE_EXTENDED_DATA, 5, 6, 2, {1,2}};
+static CanMessage message = {MTYPE_STANDARD_DATA, 0x0400 | DEVICE_ID, 0, 1, {0}};
 
 void setup() {
+  pinMode(AUTH, OUTPUT);
   pinMode(INT, INPUT);
   pinMode(MOSI, OUTPUT);
   pinMode(MISO, INPUT);
   pinMode(SCK, OUTPUT);
   pinMode(SS, OUTPUT);
+
+  digitalWrite(AUTH, LOW);
   digitalWrite(SS, HIGH);
   SPI.begin();
 
@@ -51,6 +57,19 @@ void loop() {
     mcp2515_readRX0(&message);
     printCanMessage();
     mcp2515_clearCANINTF(0xFF);
+
+    if (message.mtype == MTYPE_STANDARD_DATA && message.sid == 1) {
+      uint8_t* data = &message.data[0];
+      int device_id = data[0] << 3 | data[1] << 2 | data[2] << 1 | data[3];
+
+      if (device_id == DEVICE_ID) {
+        if (data[4] == 0) {
+          digitalWrite(AUTH, LOW);
+        } else {
+          digitalWrite(AUTH, HIGH);
+        }
+      }
+    }
   }
 }
 
