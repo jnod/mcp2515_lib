@@ -174,6 +174,20 @@ void mcp2515_readRX1(CanMessage *message) {
 }
 
 /*******************************************************************************
+  Reads rx/tx status. The bits are as follows:
+
+    TX2IF | TX2REQ  | TX1IF | TX1REQ  | TX0IF | TX0REQ  | RX1IF | RX0IF 
+      7   |    6    |   5   |    4    |   3   |    2    |   1   |   0
+*******************************************************************************/
+void mcp2515_readStatus(uint8_t* status) {
+  buffer[0] = SPI_READ_STATUS;
+
+  mcp2515_spiTransfer(buffer, 3);
+
+  *status = buffer[1];
+}
+
+/*******************************************************************************
   Reads the value of TXRTSCTRL and places the result in *txrtsctrl.
 *******************************************************************************/
 void mcp2515_readTXRTSCTRL(uint8_t *txrtsctrl) {

@@ -55,6 +55,7 @@ extern "C" {
   void mcp2515_readEFLG(uint8_t *eflg);
   void mcp2515_readRX0(CanMessage *message);
   void mcp2515_readRX1(CanMessage *message);
+  void mcp2515_readStatus(uint8_t* status);
   void mcp2515_readTXRTSCTRL(uint8_t *txrtsctrl);
   void mcp2515_reset();
   void mcp2515_rtsTX0();

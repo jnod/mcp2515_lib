@@ -27,7 +27,7 @@
 
 
 void rbpiCAN_config();
-void rbpiCAN_init();
+void rbpiCAN_init(uint8_t bcm2835_interruptPin);
 void rbpiCAN_read(CanMessage* canMessage);
 void rbpiCAN_setBaud(uint16_t baudRate);
 void rbpiCAN_start();

@@ -14,9 +14,11 @@
   limitations under the License.
 */
 
+//#include "bcm2835.h"
+#include <pthread.h>
 #include "rbpiCAN.h"
 #include <semaphore.h>
-#include <pthread.h>
+#include <unistd.h>
 
 typedef struct {
   sem_t dataSem;
@@ -33,18 +35,85 @@ pthread_t writeThread;
 sem_t spiAccessSem;
 
 uint8_t run = 0;
+uint8_t intPin = 0;
+
+static void pushRx(CanMessage* message) {
+  rxBuffer.messages[rxBuffer.tail] = *message;
+  rxBuffer.tail++;
+  sem_post(&rxBuffer.dataSem);
+}
+
+static void pushTx(CanMessage* message) {
+  txBuffer.messages[txBuffer.tail] = *message;
+  txBuffer.tail++;
+  sem_post(&txBuffer.dataSem);
+}
+
+static void popRx(CanMessage* message) {
+  sem_wait(&rxBuffer.dataSem);
+  *message = rxBuffer.messages[rxBuffer.head];
+  rxBuffer.head++;
+}
+
+static void popTx(CanMessage* message) {
+  sem_wait(&txBuffer.dataSem);
+  *message = txBuffer.messages[txBuffer.head];
+  txBuffer.head++;
+}
 
 static void* read(void* arg) {
-  while (run) {
+  uint8_t status;
+  CanMessage message;
 
+  while (run) {
+//    if (bcm2835_gpio_lev(intPin) == LOW) {
+      mcp2515_readStatus(&status);
+
+      if (status & 0x01) {
+        mcp2515_readRX0(&message);
+        pushRx(&message);
+      }
+
+      if (status & 0x02) {
+        mcp2515_readRX1(&message);
+        pushRx(&message);
+      }
+
+      mcp2515_clearCANINTF(0xFF);
+//    }
   }
 
   pthread_exit(0);
 }
 
 static void* write(void* arg) {
-  while (run) {
+  uint8_t status;
+  CanMessage message;
 
+  while (run) {
+    popTx(&message);
+
+    while (1) {
+      // Continually read status until there is an available tx register
+      mcp2515_readStatus(&status);
+
+      if ((status & 0x04) == 0) {
+        mcp2515_loadTX0(&message);
+        mcp2515_rtsTX0();
+        break;
+      } else if ((status & 0x10) == 0) {
+        mcp2515_loadTX1(&message);
+        mcp2515_rtsTX1();
+        break;
+      } else if ((status & 0x40) == 0) {
+        mcp2515_loadTX2(&message);
+        mcp2515_rtsTX2();
+        break;
+      }
+
+      // Wait a little while before trying again
+      usleep(10);
+    }
   }
 
   pthread_exit(0);
@@ -52,6 +121,8 @@ static void* write(void* arg) {
 
 void mcp2515_spiTransfer(uint8_t* buf, uint8_t len) {
   sem_wait(&spiAccessSem);
+
+  // bcm2835_spi_transfern(buf, len);
 
   sem_post(&spiAccessSem);
 }
@@ -70,12 +141,22 @@ void rbpiCAN_exit() {
     sem_destroy(&rxBuffer.dataSem);
     sem_destroy(&txBuffer.dataSem);
     sem_destroy(&spiAccessSem);
+
+    // bcm2835_spi_end();
+    // bcm2835_close();
   }
 }
 
-void rbpiCAN_init() {
+void rbpiCAN_init(uint8_t bcm2835_interruptPin) {
   if (run == 0) {
     run = 1;
+    intPin = bcm2835_interruptPin;
+
+    // if (bcm2835_init() == 0) return;
+    //
+    // bcm2835_gpio_fsel(intPin, BCM2835_GPIO_FSEL_INPT); // set INT as input
+    // bcm2835_spi_begin();
+    // bcm2835_spi_chipSelect(BCM2835_SPI_CS0);
 
     rxBuffer.head = 0; rxBuffer.tail = 0;
     txBuffer.head = 0; txBuffer.tail = 0;
@@ -86,13 +167,15 @@ void rbpiCAN_init() {
 
     pthread_create(&readThread, NULL, &read, NULL);
     pthread_create(&writeThread, NULL, &write, NULL);
+
+    mcp2515_reset();
+    mcp2515_setCANINTE(0x03); // Inturrupt when a message is received
+    mcp2515_setRXBnCTRL(0x60, 0x60); // Ignore filters, receive all messages
   }
 }
 
 void rbpiCAN_read(CanMessage* canMessage) {
-  sem_wait(&rxBuffer.dataSem);
-  *canMessage = rxBuffer.messages[rxBuffer.head];
-  rxBuffer.head++;
+  popRx(canMessage);
 }
 
 void rbpiCAN_setBaud(uint16_t baudRate) {
@@ -117,7 +200,5 @@ void rbpiCAN_start() {
 }
 
 void rbpiCAN_write(CanMessage* canMessage) {
-  txBuffer.messages[txBuffer.tail] = *canMessage;
-  txBuffer.tail++;
-  sem_post(&txBuffer.dataSem);
+  pushTx(canMessage);
 }

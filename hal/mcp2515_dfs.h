@@ -102,6 +102,7 @@
 #define SPI_READ              0x03
 #define SPI_READ_RX0          0x90
 #define SPI_READ_RX1          0x92
+#define SPI_READ_STATUS       0xA0
 #define SPI_RESET             0xC0
 #define SPI_RTS_TX0           0x81
 #define SPI_RTS_TX1           0x82

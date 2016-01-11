@@ -26,7 +26,7 @@ static CanMessage message;
 
 void setup() {
   // bcm2835_set_debug(1); // Test without using GPIO
-  if (!bcm2835_init()) return;
+  if (bcm2835_init() == 0) return;
 
   bcm2835_gpio_fsel(INT, BCM2835_GPIO_FSEL_INPT); // set INT as input
   bcm2835_spi_begin();
