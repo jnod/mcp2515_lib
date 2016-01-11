@@ -19,30 +19,83 @@
 #include <pthread.h>
 
 typedef struct {
-  sem_t data;
-  CanMessage buffer[256];
+  sem_t dataSem;
+  CanMessage messages[256];
   uint8_t head, tail;
 } CanMessageBuffer;
 
-CanMessageBuffer rxBuffer = {.head = 0, .tail = 0};
-CanMessageBuffer txBuffer = {.head = 0, .tail = 0};
+CanMessageBuffer rxBuffer;
+CanMessageBuffer txBuffer;
 
-pthread_t thread;
+pthread_t readThread;
+pthread_t writeThread;
 
-uint8_t run = 1;
+sem_t spiAccessSem;
 
-static void* communicate(void* arg) {
+uint8_t run = 0;
+
+static void* read(void* arg) {
   while (run) {
 
   }
 
-  sem_destroy(&rxBuffer.data);
-  sem_destroy(&txBuffer.data);
-
-  return arg;
+  pthread_exit(0);
 }
 
-void rbpiCAN_baud(uint16_t baudRate) {
+static void* write(void* arg) {
+  while (run) {
+
+  }
+
+  pthread_exit(0);
+}
+
+void mcp2515_spiTransfer(uint8_t* buf, uint8_t len) {
+  sem_wait(&spiAccessSem);
+
+  sem_post(&spiAccessSem);
+}
+
+void rbpiCAN_config() {
+  mcp2515_setMode(MODE_CONFIGURATION);
+}
+
+void rbpiCAN_exit() {
+  if (run) {
+    run = 0;
+
+    pthread_join(readThread, NULL);
+    pthread_join(writeThread, NULL);
+
+    sem_destroy(&rxBuffer.dataSem);
+    sem_destroy(&txBuffer.dataSem);
+    sem_destroy(&spiAccessSem);
+  }
+}
+
+void rbpiCAN_init() {
+  if (run == 0) {
+    run = 1;
+
+    rxBuffer.head = 0; rxBuffer.tail = 0;
+    txBuffer.head = 0; txBuffer.tail = 0;
+
+    sem_init(&rxBuffer.dataSem, 0, 0);
+    sem_init(&txBuffer.dataSem, 0, 0);
+    sem_init(&spiAccessSem, 0, 0);
+
+    pthread_create(&readThread, NULL, &read, NULL);
+    pthread_create(&writeThread, NULL, &write, NULL);
+  }
+}
+
+void rbpiCAN_read(CanMessage* canMessage) {
+  sem_wait(&rxBuffer.dataSem);
+  *canMessage = rxBuffer.messages[rxBuffer.head];
+  rxBuffer.head++;
+}
+
+void rbpiCAN_setBaud(uint16_t baudRate) {
   switch (baudRate) {
     case BAUD_125MHZ:
       mcp2515_configCNFn(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
@@ -59,29 +112,12 @@ void rbpiCAN_baud(uint16_t baudRate) {
   }
 }
 
-void rbpiCAN_config() {
-  mcp2515_setMode(MODE_CONFIGURATION);
-}
-
-void rbpiCAN_exit() {
-  run = 0;
-}
-
-void rbpiCAN_init() {
-  sem_init(&rxBuffer.data, 0, 0);
-  sem_init(&txBuffer.data, 0, 0);
-
-  pthread_create(&thread, NULL, &communicate, NULL);
-}
-
-void rbpiCAN_read(CanMessage* canMessage) {
-  
-}
-
 void rbpiCAN_start() {
   mcp2515_setMode(MODE_NORMAL);
 }
 
 void rbpiCAN_write(CanMessage* canMessage) {
-
+  txBuffer.messages[txBuffer.tail] = *canMessage;
+  txBuffer.tail++;
+  sem_post(&txBuffer.dataSem);
 }

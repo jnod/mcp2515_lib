@@ -26,10 +26,10 @@
 #define BAUD_1000MHZ  1000
 
 
-void rbpiCAN_baud(uint16_t baudRate);
 void rbpiCAN_config();
 void rbpiCAN_init();
 void rbpiCAN_read(CanMessage* canMessage);
+void rbpiCAN_setBaud(uint16_t baudRate);
 void rbpiCAN_start();
 void rbpiCAN_write(CanMessage* canMessage);
 
