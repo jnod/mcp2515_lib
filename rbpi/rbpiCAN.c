@@ -26,16 +26,16 @@ typedef struct {
   uint8_t head, tail;
 } CanMessageBuffer;
 
-CanMessageBuffer rxBuffer;
-CanMessageBuffer txBuffer;
+static CanMessageBuffer rxBuffer;
+static CanMessageBuffer txBuffer;
 
-pthread_t readThread;
-pthread_t writeThread;
+static pthread_t readThread;
+static pthread_t writeThread;
 
-sem_t spiAccessSem;
+static sem_t spiAccessSem;
 
-uint8_t run = 0;
-uint8_t intPin = 0;
+static uint8_t run = 0;
+static uint8_t intPin = 0;
 
 static void pushRx(CanMessage* message) {
   rxBuffer.messages[rxBuffer.tail] = *message;

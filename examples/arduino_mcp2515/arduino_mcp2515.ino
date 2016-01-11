@@ -1,5 +1,8 @@
 #include <SPI.h>
-#include <mcp2515.h>
+
+extern "C" {
+  #include <mcp2515.h>
+}
 
 #define AUTH  8
 #define INT   9
