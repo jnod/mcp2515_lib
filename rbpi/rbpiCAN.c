@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-//#include "bcm2835.h"
+#include "bcm2835.h"
 #include <pthread.h>
 #include "rbpiCAN.h"
 #include <semaphore.h>
@@ -66,7 +66,7 @@ static void* read(void* arg) {
   CanMessage message;
 
   while (run) {
-//    if (bcm2835_gpio_lev(intPin) == LOW) {
+    if (bcm2835_gpio_lev(intPin) == LOW) {
       mcp2515_readStatus(&status);
 
       if (status & 0x01) {
@@ -80,7 +80,7 @@ static void* read(void* arg) {
       }
 
       mcp2515_clearCANINTF(0xFF);
-//    }
+    }
   }
 
   pthread_exit(0);
@@ -122,7 +122,7 @@ static void* write(void* arg) {
 void mcp2515_spiTransfer(uint8_t* buf, uint8_t len) {
   sem_wait(&spiAccessSem);
 
-  // bcm2835_spi_transfern(buf, len);
+  bcm2835_spi_transfern(buf, len);
 
   sem_post(&spiAccessSem);
 }
@@ -131,32 +131,33 @@ void rbpiCAN_config() {
   mcp2515_setMode(MODE_CONFIGURATION);
 }
 
-void rbpiCAN_exit() {
-  if (run) {
-    run = 0;
-
-    pthread_join(readThread, NULL);
-    pthread_join(writeThread, NULL);
-
-    sem_destroy(&rxBuffer.dataSem);
-    sem_destroy(&txBuffer.dataSem);
-    sem_destroy(&spiAccessSem);
-
-    // bcm2835_spi_end();
-    // bcm2835_close();
-  }
-}
+/* This method is not yet functional.  */
+// void rbpiCAN_exit() {
+//   if (run) {
+//     run = 0;
+//
+//     pthread_join(readThread, NULL);
+//     pthread_join(writeThread, NULL);
+//
+//     sem_destroy(&rxBuffer.dataSem);
+//     sem_destroy(&txBuffer.dataSem);
+//     sem_destroy(&spiAccessSem);
+//
+//     bcm2835_spi_end();
+//     bcm2835_close();
+//   }
+// }
 
 void rbpiCAN_init(uint8_t bcm2835_interruptPin) {
   if (run == 0) {
     run = 1;
     intPin = bcm2835_interruptPin;
 
-    // if (bcm2835_init() == 0) return;
-    //
-    // bcm2835_gpio_fsel(intPin, BCM2835_GPIO_FSEL_INPT); // set INT as input
-    // bcm2835_spi_begin();
-    // bcm2835_spi_chipSelect(BCM2835_SPI_CS0);
+    if (bcm2835_init() == 0) return;
+
+    bcm2835_gpio_fsel(intPin, BCM2835_GPIO_FSEL_INPT); // set INT as input
+    bcm2835_spi_begin();
+    bcm2835_spi_chipSelect(BCM2835_SPI_CS0);
 
     rxBuffer.head = 0; rxBuffer.tail = 0;
     txBuffer.head = 0; txBuffer.tail = 0;
