@@ -93,8 +93,9 @@ static void* write(void* arg) {
   while (run) {
     popTx(&message);
 
-    while (1) {
-      // Continually read status until there is an available tx register
+    // Continually reads the status until there is an available tx register.
+    // Will abort if run == 0.
+    while (run) {
       mcp2515_readStatus(&status);
 
       if ((status & 0x04) == 0) {
@@ -127,26 +128,30 @@ void mcp2515_spiTransfer(uint8_t* buf, uint8_t len) {
   sem_post(&spiAccessSem);
 }
 
+void rbpiCAN_close() {
+  if (run) {
+    run = 0;
+
+    // Sends a message to the write thread so that it becomes unblocked. This
+    // message will never be sent over the CAN, though, because run == 0.
+    CanMessage message;
+    pushTx(&message);
+
+    pthread_join(readThread, NULL);
+    pthread_join(writeThread, NULL);
+
+    sem_destroy(&rxBuffer.dataSem);
+    sem_destroy(&txBuffer.dataSem);
+    sem_destroy(&spiAccessSem);
+
+    bcm2835_spi_end();
+    bcm2835_close();
+  }
+}
+
 void rbpiCAN_config() {
   mcp2515_setMode(MODE_CONFIGURATION);
 }
-
-/* This method is not yet functional.  */
-// void rbpiCAN_exit() {
-//   if (run) {
-//     run = 0;
-//
-//     pthread_join(readThread, NULL);
-//     pthread_join(writeThread, NULL);
-//
-//     sem_destroy(&rxBuffer.dataSem);
-//     sem_destroy(&txBuffer.dataSem);
-//     sem_destroy(&spiAccessSem);
-//
-//     bcm2835_spi_end();
-//     bcm2835_close();
-//   }
-// }
 
 void rbpiCAN_init(uint8_t bcm2835_interruptPin) {
   if (run == 0) {

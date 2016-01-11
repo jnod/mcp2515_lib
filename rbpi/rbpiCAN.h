@@ -26,6 +26,7 @@
 #define BAUD_1000MHZ  1000
 
 
+void rbpiCAN_close();
 void rbpiCAN_config();
 void rbpiCAN_init(uint8_t bcm2835_interruptPin);
 void rbpiCAN_read(CanMessage* canMessage);
