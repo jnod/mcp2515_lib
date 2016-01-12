@@ -18,7 +18,7 @@
 #define MCP2515_LIB_H_
 
 #include <stdint.h>
-#include "mcp2515_dfs.h"
+#include <mcp2515_dfs.h>
 
 typedef struct {
   uint8_t   mtype; // Refer to mcp2515_dfs for type definitions

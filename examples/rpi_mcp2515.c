@@ -1,15 +1,15 @@
 //#include "bcm2835.h"
-#include "../../hal/mcp2515.h"
+#include <mcp2515.h>
 #include <pthread.h>
-#include "../../rpi/rpiCAN.h"
+#include <rpiCAN.h>
 #include <semaphore.h>
 #include <stdio.h>
 
 #define STR_SIZE  100
 
+int main();
 static int commandMessageFromStr();
 static void init();
-int main();
 static void printJsonCanMessage(CanMessage*);
 static void* readCommands(void*);
 static void* readMessages(void*);
@@ -19,6 +19,33 @@ static char str[STR_SIZE];
 static pthread_t commandThread;
 static pthread_t readThread;
 static uint8_t run = 1;
+
+int main() {
+  init();
+
+  while(run) {
+    // if (bcm2835_gpio_lev(INT) == LOW) {
+    //   printf("Read: ");
+    //   mcp2515_readRX0(&message);
+    //   printJsonCanMessage();
+    //   mcp2515_clearCANINTF(0xFF);
+    // }
+
+    // if (hadCommandLineInput) {
+    //   hadCommandLineInput = 0;
+    //   if (commandMessageFromStr() == 0) {
+    //     printf("Transmit: ");
+    //     printJsonCanMessage();
+    //
+    //     mcp2515_loadTX0(&message);
+    //     mcp2515_rtsTX0();
+    //   }
+    //   sem_post(&sem);
+    // }
+  }
+
+  return 0;
+}
 
 static int commandMessageFromStr() {
   if (str[0] == 0 || str[0] == '\n') return 1;
@@ -67,33 +94,6 @@ static void init() {
   // rpiCAN_init(RPI_V2_GPIO_P1_22);
   rpiCAN_setBaud(RPICAN_BAUD_125MHZ);
   rpiCAN_start();
-}
-
-int main() {
-  init();
-
-  while(run) {
-    // if (bcm2835_gpio_lev(INT) == LOW) {
-    //   printf("Read: ");
-    //   mcp2515_readRX0(&message);
-    //   printJsonCanMessage();
-    //   mcp2515_clearCANINTF(0xFF);
-    // }
-
-    // if (hadCommandLineInput) {
-    //   hadCommandLineInput = 0;
-    //   if (commandMessageFromStr() == 0) {
-    //     printf("Transmit: ");
-    //     printJsonCanMessage();
-    //
-    //     mcp2515_loadTX0(&message);
-    //     mcp2515_rtsTX0();
-    //   }
-    //   sem_post(&sem);
-    // }
-  }
-
-  return 0;
 }
 
 static void printJsonCanMessage(CanMessage* message) {
