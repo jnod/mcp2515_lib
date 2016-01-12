@@ -1,7 +1,7 @@
 #include <SPI.h>
 
 extern "C" {
-  #include <mcp2515.h>
+  #include "mcp2515.h"
 }
 
 #define AUTH  8

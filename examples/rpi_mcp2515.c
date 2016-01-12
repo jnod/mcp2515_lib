@@ -9,39 +9,27 @@
 
 int main();
 static int commandMessageFromStr();
-static void init();
 static void printJsonCanMessage(CanMessage*);
 static void* messageReader(void*);
-static void* messageSender(void*);
 
 static CanMessage commandMessage;
 static char str[STR_SIZE];
-static pthread_t commandThread;
 static pthread_t readThread;
 static uint8_t run = 1;
 
 int main() {
-  init();
+  pthread_create(&readThread, NULL, messageReader, NULL);
+
+  rpiCAN_init(RPICAN_GPIO_25);
+  rpiCAN_setBaud(RPICAN_BAUD_125MHZ);
+  rpiCAN_start();
 
   while(run) {
-    // if (bcm2835_gpio_lev(INT) == LOW) {
-    //   printf("Read: ");
-    //   mcp2515_readRX0(&message);
-    //   printJsonCanMessage();
-    //   mcp2515_clearCANINTF(0xFF);
-    // }
-
-    // if (hadCommandLineInput) {
-    //   hadCommandLineInput = 0;
-    //   if (commandMessageFromStr() == 0) {
-    //     printf("Transmit: ");
-    //     printJsonCanMessage();
-    //
-    //     mcp2515_loadTX0(&message);
-    //     mcp2515_rtsTX0();
-    //   }
-    //   sem_post(&sem);
-    // }
+    fgets(str, STR_SIZE, stdin);
+    if (commandMessageFromStr() == 0) {
+      printJsonCanMessage(&commandMessage);
+      rpiCAN_write(&commandMessage);
+    }
   }
 
   return 0;
@@ -87,15 +75,6 @@ static int commandMessageFromStr() {
   return 0;
 }
 
-static void init() {
-  pthread_create(&commandThread, NULL, messageSender, NULL);
-  pthread_create(&readThread, NULL, messageReader, NULL);
-
-  rpiCAN_init(RPICAN_GPIO_25);
-  rpiCAN_setBaud(RPICAN_BAUD_125MHZ);
-  rpiCAN_start();
-}
-
 static void printJsonCanMessage(CanMessage* message) {
   printf("{\"mtype\":%u,\"sid\":%u,\"eid\":%u,\"length\":%u,\"data\":[",
           message->mtype, message->sid, message->eid, message->length);
@@ -119,17 +98,6 @@ static void* messageReader(void* arg) {
   while(run) {
     rpiCAN_read(&message);
     printJsonCanMessage(&message);
-  }
-
-  pthread_exit(0);
-}
-
-static void* messageSender(void* arg) {
-  while(run) {
-    fgets(str, STR_SIZE, stdin);
-    if (commandMessageFromStr() == 0) {
-      printJsonCanMessage(&commandMessage);
-    }
   }
 
   pthread_exit(0);
