@@ -14,9 +14,8 @@
   limitations under the License.
 */
 
-#include "bcm2835.h"
 #include <pthread.h>
-#include "rbpiCAN.h"
+#include "rpiCAN.h"
 #include <semaphore.h>
 #include <unistd.h>
 
@@ -128,7 +127,7 @@ void mcp2515_spiTransfer(uint8_t* buf, uint8_t len) {
   sem_post(&spiAccessSem);
 }
 
-void rbpiCAN_close() {
+void rpiCAN_close() {
   if (run) {
     run = 0;
 
@@ -149,11 +148,11 @@ void rbpiCAN_close() {
   }
 }
 
-void rbpiCAN_config() {
+void rpiCAN_config() {
   mcp2515_setMode(MODE_CONFIGURATION);
 }
 
-void rbpiCAN_init(uint8_t bcm2835_interruptPin) {
+void rpiCAN_init(uint8_t bcm2835_interruptPin) {
   if (run == 0) {
     run = 1;
     intPin = bcm2835_interruptPin;
@@ -180,11 +179,11 @@ void rbpiCAN_init(uint8_t bcm2835_interruptPin) {
   }
 }
 
-void rbpiCAN_read(CanMessage* canMessage) {
+void rpiCAN_read(CanMessage* canMessage) {
   popRx(canMessage);
 }
 
-void rbpiCAN_setBaud(uint16_t baudRate) {
+void rpiCAN_setBaud(uint16_t baudRate) {
   switch (baudRate) {
     case BAUD_125MHZ:
       mcp2515_configCNFn(CNF1_10MHZ_125KBIT, CNF2_10MHZ_125KBIT, CNF3_10MHZ_125KBIT);
@@ -201,10 +200,10 @@ void rbpiCAN_setBaud(uint16_t baudRate) {
   }
 }
 
-void rbpiCAN_start() {
+void rpiCAN_start() {
   mcp2515_setMode(MODE_NORMAL);
 }
 
-void rbpiCAN_write(CanMessage* canMessage) {
+void rpiCAN_write(CanMessage* canMessage) {
   pushTx(canMessage);
 }
