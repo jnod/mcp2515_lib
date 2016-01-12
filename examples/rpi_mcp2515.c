@@ -114,6 +114,12 @@ static void printJsonCanMessage(CanMessage* message) {
 }
 
 static void* messageReader(void* arg) {
+  CanMessage message;
+
+  while(run) {
+    rpiCAN_read(&message);
+    printJsonCanMessage(&message);
+  }
 
   pthread_exit(0);
 }
