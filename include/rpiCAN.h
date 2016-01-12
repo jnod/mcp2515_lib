@@ -14,12 +14,12 @@
   limitations under the License.
 */
 
-#ifndef RPI_CAN_H_
-#define RPI_CAN_H_
+#ifndef RPICAN_H_
+#define RPICAN_H_
 
 #include <bcm2835.h>
 #include <stdint.h>
-#include <mcp2515.h>
+#include "mcp2515.h"
 
 #define RPICAN_BAUD_125MHZ   125
 #define RPICAN_BAUD_250MHZ   250

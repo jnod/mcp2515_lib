@@ -29,8 +29,8 @@ static void pushRx(CanMessage*);
 static void pushTx(CanMessage*);
 static void popRx(CanMessage*);
 static void popTx(CanMessage*);
-static void* read(void*);
-static void* write(void*);
+static void* reader(void*);
+static void* writer(void*);
 
 static CanMessageBuffer rxBuffer;
 static CanMessageBuffer txBuffer;
@@ -91,8 +91,8 @@ void rpiCAN_init(uint8_t bcm2835_interruptPin) {
     sem_init(&txBuffer.dataSem, 0, 0);
     sem_init(&spiAccessSem, 0, 0);
 
-    pthread_create(&readThread, NULL, &read, NULL);
-    pthread_create(&writeThread, NULL, &write, NULL);
+    pthread_create(&readThread, NULL, &reader, NULL);
+    pthread_create(&writeThread, NULL, &writer, NULL);
 
     mcp2515_reset();
     mcp2515_setCANINTE(0x03); // Inturrupt when a message is received
@@ -153,7 +153,7 @@ static void popTx(CanMessage* message) {
   txBuffer.head++;
 }
 
-static void* read(void* arg) {
+static void* reader(void* arg) {
   uint8_t status;
   CanMessage message;
 
@@ -178,7 +178,7 @@ static void* read(void* arg) {
   pthread_exit(0);
 }
 
-static void* write(void* arg) {
+static void* writer(void* arg) {
   uint8_t status;
   CanMessage message;
 

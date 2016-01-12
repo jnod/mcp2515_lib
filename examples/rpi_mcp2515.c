@@ -1,7 +1,7 @@
 //#include "bcm2835.h"
-#include <mcp2515.h>
+#include "mcp2515.h"
 #include <pthread.h>
-#include <rpiCAN.h>
+#include "rpiCAN.h"
 #include <semaphore.h>
 #include <stdio.h>
 
@@ -11,8 +11,8 @@ int main();
 static int commandMessageFromStr();
 static void init();
 static void printJsonCanMessage(CanMessage*);
-static void* readCommands(void*);
-static void* readMessages(void*);
+static void* messageReader(void*);
+static void* messageSender(void*);
 
 static CanMessage commandMessage;
 static char str[STR_SIZE];
@@ -88,10 +88,10 @@ static int commandMessageFromStr() {
 }
 
 static void init() {
-  pthread_create(&commandThread, NULL, readCommands, NULL);
-  pthread_create(&readThread, NULL, readMessages, NULL);
+  pthread_create(&commandThread, NULL, messageSender, NULL);
+  pthread_create(&readThread, NULL, messageReader, NULL);
 
-  // rpiCAN_init(RPI_V2_GPIO_P1_22);
+  rpiCAN_init(RPICAN_GPIO_25);
   rpiCAN_setBaud(RPICAN_BAUD_125MHZ);
   rpiCAN_start();
 }
@@ -113,18 +113,18 @@ static void printJsonCanMessage(CanMessage* message) {
   printf("]}\n");
 }
 
-static void* readCommands(void* v) {
+static void* messageReader(void* arg) {
+
+  pthread_exit(0);
+}
+
+static void* messageSender(void* arg) {
   while(run) {
     fgets(str, STR_SIZE, stdin);
     if (commandMessageFromStr() == 0) {
       printJsonCanMessage(&commandMessage);
     }
   }
-
-  pthread_exit(0);
-}
-
-static void* readMessages(void* arg) {
 
   pthread_exit(0);
 }
