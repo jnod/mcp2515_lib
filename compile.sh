@@ -5,4 +5,4 @@ if [ ! -d "bin" ]; then
 fi
 
 gcc -c -o bin/mcp2515.o *.c
-ar rcs bin/mcp2515.a bin/mcp2515.o
+ar rcs bin/libmcp2515.a bin/mcp2515.o
